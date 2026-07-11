@@ -400,16 +400,21 @@ function render(nodeId){
       if (verb==='absolve'){ S.absolved=(S.absolved||0)+1;
         S.star=clamp(S.star-1,0,6); AUDIO.setStar(S.star); AUDIO.sting('absolve'); }
       else { S.punished=(S.punished||0)+1;
-        S.sins.wrath=clamp(S.sins.wrath+1,0,9); AUDIO.sting('punish'); }
+        S.sins.wrath=clamp(S.sins.wrath+1,0,9);
+        // the blade eats light — and the poet objects, once
+        S.star=clamp(S.star-1,0,6); AUDIO.setStar(S.star);
+        if (!S.flags.firstPunish){ S.flags.firstPunish=1; S.virgil=clamp(S.virgil-1,0,6); }
+        AUDIO.sting('punish'); }
       render('n_rite'); };
+    const soulX=SOULS[jid];
     if (S.star>=4){
       const b=document.createElement('button'); b.className='choice holy';
-      b.innerHTML=`<span class="c-pre">spend a candle of the star</span>Absolve them. Let one knot of Hell come undone, and pay the light it costs.`;
+      b.innerHTML=`<span class="c-pre">spend a candle of the star</span>${soulX.absolveChoice||'Absolve them. Let one knot of Hell come undone, and pay the light it costs.'}`;
       b.onclick=()=>rite('absolve'); box.appendChild(b);
     }
     if (S.flags.scythe){
       const b=document.createElement('button'); b.className='choice grim';
-      b.innerHTML=`<span class="c-pre">death’s office</span>Let the scythe do what it was forged for.`;
+      b.innerHTML=`<span class="c-pre">death’s office — the blade eats light</span>${soulX.punishChoice||'Let the scythe do what it was forged for.'}`;
       b.onclick=()=>rite('punish'); box.appendChild(b);
     }
   }
@@ -538,6 +543,14 @@ function debugPanel(){
   $('dbg-scythe').onclick=()=>{ if(!S)return; S.flags.scythe=1; render(S.node); };
   $('dbg-rites').onclick=()=>{ if(!S)return; S.absolved=4; S.punished=3; render(S.node); };
 }
+// click the panel to finish the unfurl instantly
+$('text-panel').addEventListener('click',e=>{
+  if (e.target.closest('.choice')) return;
+  document.querySelectorAll('#node-text .para').forEach(el=>{
+    el.style.animation='none'; el.style.opacity=1; });
+  const box=$('choices');
+  if (box.classList.contains('late')){ box.style.animation='none'; box.style.opacity=1; }
+});
 document.addEventListener('keydown',e=>{
   if (e.key==='`'||e.key==='~') return debugPanel();
   if (e.target && e.target.matches && e.target.matches('input')) return;
