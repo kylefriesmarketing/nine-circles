@@ -119,7 +119,7 @@ $('btn-endings').onclick=()=>{
     `<div class="ending-grid">`+ids.map(i=>{
       const e=ENDINGS[i];
       return P.endings[i]
-        ? `<div class="ending-cell k-${e.kind}"><span class="ek">${e.kind}</span>${e.title}<span style="opacity:.5;font-size:10px">×${P.endings[i]}</span></div>`
+        ? `<div class="ending-cell k-${e.kind}" style="background:linear-gradient(180deg,#0b0a09b0,#0b0a09e8),url('assets/endings/${i}.jpg') center/cover"><span class="ek">${e.kind}</span>${e.title}<span style="opacity:.6;font-size:10px">×${P.endings[i]}</span></div>`
         : `<div class="ending-cell locked">?</div>`;
     }).join('')+`</div>`);
 };

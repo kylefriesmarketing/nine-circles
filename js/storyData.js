@@ -95,6 +95,33 @@ const SIN_NODE = { lust:'n_storm', gluttony:'n_c3_rain', greed:'n_c4_plutus',
 const SIN_WORD = { pride:'pride', envy:'envy', wrath:'wrath', sloth:'sloth',
   greed:'greed', gluttony:'appetite', lust:'longing' };
 
+/* Virgil's asides — the guide reacts to who you are becoming.
+   Appended to circle-arrival texts; returns '' when he has nothing to say. */
+const V_WARN = {
+  lust:`<em>“Walk the middle of the road here,”</em> the poet says, not looking at you. <em>“The storm has read your ledger, {NAME}, and it packs for the journey.”</em>`,
+  gluttony:`<em>“Breathe shallow on this floor,”</em> the poet murmurs. <em>“Appetite is a weather, and you arrive already damp with it.”</em>`,
+  greed:`<em>“Hands inside your cloak on this terrace,”</em> the poet says. <em>“Not everything that can be held should learn your grip.”</em>`,
+  wrath:`<em>“Your jaw has been set since two circles up,”</em> the poet observes. <em>“Unset it. This marsh waters what you are growing.”</em>`,
+  sloth:`<em>“Keep walking,”</em> the poet says, more gently than usual. <em>“Whatever in you wants to sit down and be finished — this is the floor that furnishes chairs.”</em>`,
+  pride:`<em>“Stand as tall as you must,”</em> the poet says drily. <em>“Only note that the tombs on this floor are measured for exactly that posture.”</em>`,
+  envy:`<em>“You keep looking at what the trees kept,”</em> the poet says. <em>“Look instead at what they lost. It is the same inventory, read in the correct order.”</em>`,
+};
+const vA = (S,P,key) => {
+  if (S.virgil<=1)
+    return `\n\nThe poet walks a little apart from you now, and offers nothing.`;
+  const sin = key==='styx' ? (S.sins.sloth>S.sins.wrath?'sloth':'wrath') : key;
+  if (key==='ice'){
+    if (S.flags.scythe) return `\n\n<em>“Sheathe the edge here,”</em> the poet says quietly. <em>“This lake was sentenced by an older court than your blade’s. And it is watching.”</em>`;
+    if (S.names.length>=3) return `\n\n<em>“Three names, all spent,”</em> the poet says. <em>“Whatever begs you from the ice tonight, {NAME} — you have nothing left to give it but witness. Sometimes that is the better coin.”</em>`;
+    if (S.names.length===0) return `\n\n<em>“You carried no one, in the end,”</em> the poet says, without judgment, which is worse. <em>“The ice will not remark on it. The ice remarks on nothing.”</em>`;
+    return '';
+  }
+  if (S.flags.scythe && key==='gluttony')
+    return `\n\n<em>“Must you carry that on your shoulder?”</em> the poet sighs. <em>“The dead keep mistaking you for their appointment. The dog will be no different.”</em>`;
+  if (V_WARN[sin] && S.sins[sin]>=4) return `\n\n`+V_WARN[sin];
+  return '';
+};
+
 /* ======================================================================
    NODES
    ====================================================================== */
@@ -269,6 +296,8 @@ n_limbo_poets: { region:'limbo', title:'The School of the Great',
     { t:'Bow to Homer first. Some debts you pay on sight.', star:1, go:'n_minos' },
     { t:'Ask your poet: “What should I remember of YOU?”', virgil:1, go:'n_minos',
       fx:S=>S.flags.askedVirgil=1 },
+    { t:'Envy them, suddenly and completely — the peace, the company, the names that outlived breath.',
+      sin:{envy:2}, go:'n_minos' },
     { t:'Stay with the poets. Enroll. Audit eternity.', gleam:'pride', sin:{sloth:1,pride:1},
       end:'e_limbo' },
   ]},
@@ -308,7 +337,7 @@ n_minos_read: { region:'minos', title:'The Reading',
 /* ---------------- CIRCLE II — LUST ---------------- */
 n_storm: { region:'lust', title:'The Whirlwind of Lovers',
   enter:S=>{ if(S.flags.sentenced){S.flags.sentenced=0;} },
-  text:`The light stammers and dies, and the wind takes over the job of screaming. Here the storm is the landlord: souls ride it like starlings in murmuration, wheeled and flung and never once set down — all the ones who let the heart drive with the lamps off.\n\nThey stream past in ribbons. And there — two who fly <em>together</em>, holding, somehow light upon the wind even here, like things borne willingly.`,
+  text:(S,P)=>`The light stammers and dies, and the wind takes over the job of screaming. Here the storm is the landlord: souls ride it like starlings in murmuration, wheeled and flung and never once set down — all the ones who let the heart drive with the lamps off.\n\nThey stream past in ribbons. And there — two who fly <em>together</em>, holding, somehow light upon the wind even here, like things borne willingly.`+vA(S,P,'lust'),
   choices:[
     { t:'Call the two down, in the name of whatever they love.', go:'n_francesca' },
     { t:'Watch the storm a while. It is, God help you, beautiful.', sin:{lust:1},
@@ -359,7 +388,7 @@ n_c2_exit: { region:'lust', title:'Down and Down',
 
 /* ---------------- CIRCLE III — GLUTTONY ---------------- */
 n_c3_rain: { region:'gluttony', title:'The Rain That Rots',
-  text:`Cold rain, fat rain, rain with hail folded in like gravel into dough — falling forever on a mudflat of the sprawled dead, who lie in it like the guests after the party of all parties. The smell is a whole biography.\n\nAhead, astride three ruts of mud, the dog: Cerberus, three throats wide, barking in chords. Each head disagrees with the others about which part of you to begin with.`,
+  text:(S,P)=>`Cold rain, fat rain, rain with hail folded in like gravel into dough — falling forever on a mudflat of the sprawled dead, who lie in it like the guests after the party of all parties. The smell is a whole biography.\n\nAhead, astride three ruts of mud, the dog: Cerberus, three throats wide, barking in chords. Each head disagrees with the others about which part of you to begin with.`+vA(S,P,'gluttony'),
   choices:[
     { t:'Do as the poet does: throw fistfuls of mud into all three mouths.', virgil:1,
       go:'n_ciacco' },
@@ -381,6 +410,8 @@ n_ciacco: { region:'gluttony', title:'Ciacco', judge:{soul:'s_ciacco',go:'n_c4_p
       fx:S=>{S.judged.s_ciacco='question';S.flags.prophecy=1;}, go:'n_ciacco_prophecy' },
     { pre:'carry his name', t:'“Ciacco. At a dinner. Once a year. I swear it.”',
       remember:'s_ciacco', fx:S=>S.judged.s_ciacco='remember', go:'n_c4_plutus' },
+    { t:'“Describe the feasts. Every course. Slowly.” — and listen with your mouth watering in the rain.',
+      gleam:'gluttony', sin:{gluttony:2}, fx:S=>S.flags.fedOnCiacco=1, go:'n_c4_plutus' },
   ]},
 n_ciacco_prophecy: { region:'gluttony', title:'What the Dead Know',
   text:`The dead see forward, never around: it is the fine print of their condition.\n\n<em>“Your city,”</em> Ciacco says, eyes focusing on some noon well past your death, <em>“will do what cities do. The party of the woods will drive out the party of the walls; then the walls will drive out the woods; the just will be two, and no one will listen to them. Pride, envy, avarice — those are the three sparks that have all hearts enkindled. It was true when I breathed. It will be true when the sun forgets your language.”</em>\n\nHe sinks back a little into the mud, spent.\n\n<em>“The name,”</em> he says. <em>“Don’t forget the part about the name.”</em>`,
@@ -393,7 +424,7 @@ n_ciacco_prophecy: { region:'gluttony', title:'What the Dead Know',
 
 /* ---------------- CIRCLE IV — GREED ---------------- */
 n_c4_plutus: { region:'greed', title:'Pape Satàn',
-  text:`<em>“Pape Satàn, pape Satàn, aleppe!”</em> — the thing at the mouth of the fourth circle clucks it like a hen made of money, swollen, blustering, guarding nothing that anyone could carry away.\n\nThe poet says one sentence — something about wolves and the will above — and Plutus collapses like a sail with its rigging cut.\n\nBeyond: two vast half-circles of the dead, each soul chest-rolling a boulder of dead weight, clashing against the opposite tide at the meeting points — <em>“Why hoard?” “Why squander?”</em> — then wheeling around to do it again. Forever. An economy.`,
+  text:(S,P)=>`<em>“Pape Satàn, pape Satàn, aleppe!”</em> — the thing at the mouth of the fourth circle clucks it like a hen made of money, swollen, blustering, guarding nothing that anyone could carry away.\n\nThe poet says one sentence — something about wolves and the will above — and Plutus collapses like a sail with its rigging cut.\n\nBeyond: two vast half-circles of the dead, each soul chest-rolling a boulder of dead weight, clashing against the opposite tide at the meeting points — <em>“Why hoard?” “Why squander?”</em> — then wheeling around to do it again. Forever. An economy.`+vA(S,P,'greed'),
   choices:[
     { t:'Watch one full rotation of the wheel. Understand it.', go:'n_c4_watch' },
     { t:'“Poet — why do I recognize no one here?”', go:'n_c4_faces' },
@@ -437,7 +468,7 @@ n_miser2: { region:'greed', title:'The Inventory',
 
 /* ---------------- CIRCLE V — STYX ---------------- */
 n_c5_styx: { region:'styx', title:'The Marsh of the Two Angers',
-  text:`The circle below is a marsh the color of old anger, and in it the wrathful are at their forever-work: striking, tearing, gnashing — not with weapons, with <em>each other</em>, headlong and hopeless, a bar fight the size of a county.\n\nBut watch the water between the bodies: bubbles. Rising in slow ropes from the mud beneath, where — the poet tells you — lie the sullen, fixed in slime, gurgling a hymn they never once sang aloud in the sweet air: <em>we were sad in the sun, and now we are sad in the dark, and at least the dark admits it.</em>\n\nAcross the water, a watchtower answers itself with two small flames, and something that is technically a boat begins to arrive.`,
+  text:(S,P)=>`The circle below is a marsh the color of old anger, and in it the wrathful are at their forever-work: striking, tearing, gnashing — not with weapons, with <em>each other</em>, headlong and hopeless, a bar fight the size of a county.\n\nBut watch the water between the bodies: bubbles. Rising in slow ropes from the mud beneath, where — the poet tells you — lie the sullen, fixed in slime, gurgling a hymn they never once sang aloud in the sweet air: <em>we were sad in the sun, and now we are sad in the dark, and at least the dark admits it.</em>\n\nAcross the water, a watchtower answers itself with two small flames, and something that is technically a boat begins to arrive.`+vA(S,P,'styx'),
   choices:[
     { t:'Kneel at the water’s edge and listen to the bubbles.', go:'n_sullen' },
     { t:'Hail the boat.', go:'n_argenti' },
@@ -564,7 +595,7 @@ n_cav_after: { region:'heresy', title:'What Falls Back Burning',
 
 /* ---------------- CIRCLE VII — WOOD & SAND ---------------- */
 n_c7_wood: { region:'wood', title:'The Wood of the Self-Slain',
-  text:`Past the ruins and the reek, a forest — and every instinct you grew in the first dark wood howls that this one is worse. No green leaves, but black ones; no smooth branches, but knotted, warped; no fruit, but thorns with a private grudge.\n\nAnd nests. In the ugly branches, the Harpies: bird-bodied, woman-faced, making lamentation that is somehow <em>at</em> you.\n\n<em>“Listen,”</em> the poet says. <em>“You hear wailing and see no one. Break — gently — one small twig from one tree, and you will understand what walks here. Or rather, what stands.”</em>`,
+  text:(S,P)=>`Past the ruins and the reek, a forest — and every instinct you grew in the first dark wood howls that this one is worse. No green leaves, but black ones; no smooth branches, but knotted, warped; no fruit, but thorns with a private grudge.\n\nAnd nests. In the ugly branches, the Harpies: bird-bodied, woman-faced, making lamentation that is somehow <em>at</em> you.\n\n<em>“Listen,”</em> the poet says. <em>“You hear wailing and see no one. Break — gently — one small twig from one tree, and you will understand what walks here. Or rather, what stands.”</em>`+vA(S,P,'envy'),
   choices:[
     { t:'Break one small twig, gently.', go:'n_pier' },
     { t:'Refuse. If the trees are what you suspect, leave them whole.', heart:1, virgil:1,
@@ -617,8 +648,8 @@ n_pier_after: { region:'wood', title:'Leaves, Stilled',
       go:'n_c7_sand' },
   ]},
 n_c7_sand: { region:'sand', title:'The Rain of Fire',
-  text:S=>(S.flags.sparedWood?`You left the wood unbroken. Somewhere behind you a tree that expected to be snapped stands whole, and the Harpies’ song has one note of confusion in it, which you choose to count as a win.\n\n`:``)
-    +`The sand burns from below and the fire falls from above; the violent-against-God lie supine on it, the profligate run, the usurers crouch — everyone has been assigned a posture and the posture is the sentence.\n\nThe poet points along the margin, where a stone channel steams: <em>“We walk the rim. Quickly, and low. The fire respects nothing, but it respects it slower near the water.”</em>\n\nAcross the sand, an old shade who should be running has stopped — bent double, hands on knees, finished, while the flakes land on him unhurried.`,
+  text:(S,P)=>(S.flags.sparedWood?`You left the wood unbroken. Somewhere behind you a tree that expected to be snapped stands whole, and the Harpies’ song has one note of confusion in it, which you choose to count as a win.\n\n`:``)
+    +`The sand burns from below and the fire falls from above; the violent-against-God lie supine on it, the profligate run, the usurers crouch — everyone has been assigned a posture and the posture is the sentence.\n\nThe poet points along the margin, where a stone channel steams: <em>“We walk the rim. Quickly, and low. The fire respects nothing, but it respects it slower near the water.”</em>\n\nAcross the sand, an old shade who should be running has stopped — bent double, hands on knees, finished, while the flakes land on him unhurried.`+vA(S,P,'pride'),
   choices:[
     { t:'Run the margin, cloak over your head, as told.', virgil:1, go:'n_geryon' },
     { t:'Walk it upright and unhurried. Let it burn. You don’t bow to weather.',
@@ -627,6 +658,51 @@ n_c7_sand: { region:'sand', title:'The Rain of Fire',
       star:1, go:'n_sand_carry' },
     { t:'Study the usurers’ crouch — each stares at a purse hung round his neck.',
       sin:{greed:1}, go:'n_geryon' },
+    { t:'A runner breaks from a passing band — squinting up at you like a man rereading a beloved book.',
+      go:'n_brunetto' },
+    { t:'A giant lies unbowed on the open sand, cursing upward between the falling flakes.',
+      go:'n_capaneus' },
+  ]},
+n_brunetto: { region:'sand', title:'The Running Teacher',
+  text:`He cannot stop — that is his sentence, to run beneath the fire forever — so he runs <em>beside</em> you along the margin, craning up, and his scorched face does the impossible thing: it lights up.\n\n<em>“You,”</em> he says. <em>“A living face. And walking the long way down — someone taught you to read, then. GOOD. Someone taught you to read.”</em>\n\nHe was a teacher. You know it in half a sentence — the way he checks whether you’re keeping pace not with his feet but with his <em>meaning</em>. Ser Brunetto, of Florence: rhetorician, notary, the man half a city’s statesmen learned their letters from, jogging through eternity under a slow rain of fire with his dignity somehow entirely intact.\n\n<em>“Ask me the thing,”</em> he says. <em>“You have a question in your pocket. Students always do. Quickly — my band circles back for me at the next dune, and the fire dislikes loiterers.”</em>`,
+  choices:[
+    { t:'“How does a man make himself eternal?”', go:'n_brunetto2' },
+    { t:'“Why are YOU here, teacher? What was the sin?”', heart:1, go:'n_brunetto2',
+      fx:S=>S.flags.askedBrunetto=1 },
+    { t:'Weep for him — the mind that taught a city, jogging under fire.', heart:1,
+      go:'n_geryon', fx:S=>S.flags.wept_brunetto=1 },
+    { t:'Keep your questions. Nod, and let him catch his band.', go:'n_geryon' },
+  ]},
+n_brunetto2: { region:'sand', title:'How Man Makes Himself Eternal',
+  text:S=>(S.flags.askedBrunetto
+    ? `<em>“The sin?”</em> He waves it off like a fly, mid-stride. <em>“The court wrote what it wrote; I ran out of appeals centuries ago. Do not learn my sentence, student. Learn my SYLLABUS. Here it is entire:”</em>\n\n`
+    : `He does not slow down. If anything he speeds up — a teacher with one lecture left and a closing window.\n\n`)
+    +`<em>“A man makes himself eternal by the WORK, {NAME}. Not the name — the name is weather, the name is what pigeons sit on. The work. I wrote a book called the Treasure, and I am not in this fire, not really — I am on a shelf in Florence, in Paris, in a hundred towns I never walked, being opened by people who will never once pronounce my name correctly. And every time they open it —”</em> he taps his scorched breastbone — <em>“somewhere in here, it stops raining.”</em>\n\nHis band crests the dune. He has seconds, and spends them on you:\n\n<em>“Remember my Treasure, in which I still live. Not me — the BOOK. Read one page of it in the sweet air and you will have done more for me than a cathedral of candles. Now watch —”</em> and he peels away, accelerating, robes streaming, and the last you see of ser Brunetto he seems like him who wins the race across the field — not him who loses it.`,
+  choices:[
+    { t:'“I’ll find the Treasure. One page. I swear it.”', star:1,
+      fx:S=>S.flags.treasureVow=1, go:'n_geryon' },
+    { t:'Call after him: “The name TOO, teacher. Both. I’ll carry both.”', heart:1,
+      go:'n_geryon' },
+    { t:'Watch him win the race, and walk on.', go:'n_geryon' },
+  ]},
+n_capaneus: { region:'sand', title:'Capaneus',
+  text:`He lies flat on his back in the open burn, arms crossed behind his head like a man sunbathing at the beach of the apocalypse, and he is CURSING — upward, methodically, in a parade-ground voice that has not cracked in three thousand years.\n\n<em>“What I was living,”</em> he booms, to you, to the fire, to the management, <em>“that am I dead. Let Him tire His smith out forging bolts. Let Him fling them. He will not get from ME the satisfaction of a flinch.”</em>\n\nA fire-flake lands on his chest. He does not flinch. It visibly costs him everything not to.\n\nThe poet’s voice at your ear, with unusual heat: <em>“O Capaneus — in that your pride remains unquenched, you are punished MORE. No torment on this sand is the equal of your own rage. Note it, {NAME}. The fire is scenery. The defiance is the sentence, self-imposed, self-renewed, and he would not surrender it for Heaven itself.”</em>`,
+  choices:[
+    { t:'Admire him. Unbowed under the fire of God — there’s iron in that.', gleam:'pride',
+      sin:{pride:2}, go:'n_geryon' },
+    { t:'“And if the fire stopped tomorrow — what would you do?”', go:'n_capaneus2' },
+    { t:'Pity him — a king who built his own oven and calls it a throne.', heart:1,
+      go:'n_geryon' },
+    { t:'Walk on. Some monuments are best read at speed.', go:'n_geryon' },
+  ]},
+n_capaneus2: { region:'sand', title:'The Question He Hates',
+  text:`For the first time in thirty centuries, Capaneus is quiet.\n\nThe fire falls. The sand burns. Somewhere behind you the usurers rearrange their purses.\n\n<em>“…Curse louder,”</em> he says finally, but the parade-ground is gone from it; for one syllable he sounds like a man who has glimpsed the shape of his own machine — rage feeding fire feeding rage, a wheel with no axle but him.\n\nThen the volume returns, doubled: <em>“LOUDER, do you hear! Let Him hear! WHAT I WAS LIVING —”</em>\n\nBut you both heard the gap. The gap was the whole conversation.`,
+  choices:[
+    { t:'Leave him the dignity of the volume. Walk on.', heart:1, go:'n_geryon' },
+    { t:'“I heard the gap, king. I’ll remember the gap, not the shouting.”', star:1,
+      heart:-1, go:'n_geryon' },
+    { t:'Lie down beside him a moment in solidarity. Curse once, together.', sin:{wrath:1,pride:1},
+      go:'n_geryon' },
   ]},
 n_sand_carry: { region:'sand', title:'The Weight of a Stranger',
   text:`He weighs nothing — the dead are all debt and no substance — but the fire doesn’t know that, and it finds you fast. You get him to the steaming channel’s edge, both of you smoldering, and set him down.\n\n<em>“Why?”</em> he asks. Not gratefully. <em>Forensically.</em> Nobody has done anything sideways in this circle for a thousand years; everything here moves either up (fire) or down (sand). You have introduced a horizontal, and he is troubled by the geometry.\n\nYou have no answer that survives the walk back into words. He watches you go, and just before the fire-rain closes the view, he raises one hand — not a wave. More like a man in court, volunteering as witness.`,
@@ -729,7 +805,7 @@ n_ulysses_offer: { region:'malebolge', title:'The Last Temptation of the Map',
       star:1, go:'n_c9_ice' },
     { pre:'speak the verse — back at him', verse:'v_brutes',
       t:'“‘For pursuit of virtue AND of knowledge.’ You always skip a word, captain. I’m going down, and then up.”',
-      star:2, virgil:1, go:'n_c9_ice', fx:S=>S.flags.beatUlysses=1 },
+      star:1, virgil:1, go:'n_c9_ice', fx:S=>S.flags.beatUlysses=1 },
     { t:'Take his bearing. Board the one boat. Sail.', gleam:'pride', sin:{pride:2},
       end:'e_voyage' },
     { t:'Ask what he thinks is out there that needs stopping.', star:-1, go:'n_c9_ice',
@@ -738,8 +814,8 @@ n_ulysses_offer: { region:'malebolge', title:'The Last Temptation of the Map',
 
 /* ---------------- CIRCLE IX — COCYTUS ---------------- */
 n_c9_ice: { region:'ice', title:'The Lake of the Last Silence',
-  text:S=>(S.flags.beatUlysses?`(Behind you, for a long moment, the horned flame did not move. Then — quietly, in Greek, in a tone you elect not to translate — it laughed, and walked its trench with something almost like lightness.)\n\n`:``)
-    +`Down the last cliff, past giants racked like siege-towers in the gloom, the world arrives at its answer: ice.\n\nA lake of it, iron-hard, lit from nowhere — Cocytus. And in the ice, faces. The traitors, sealed to their chins, teeth chattering in a key that says the sound long ago stopped being about the cold. A wind you will meet the maker of shortly combs the surface.\n\nWalking between the heads, your boot connects — hard — with a face.\n\n<em>“WHY do you TRAMPLE me?”</em> it howls. <em>“Unless you come to add to the vengeance of Montaperti — WHY?”</em>`,
+  text:(S,P)=>(S.flags.beatUlysses?`(Behind you, for a long moment, the horned flame did not move. Then — quietly, in Greek, in a tone you elect not to translate — it laughed, and walked its trench with something almost like lightness.)\n\n`:``)
+    +`Down the last cliff, past giants racked like siege-towers in the gloom, the world arrives at its answer: ice.\n\nA lake of it, iron-hard, lit from nowhere — Cocytus. And in the ice, faces. The traitors, sealed to their chins, teeth chattering in a key that says the sound long ago stopped being about the cold. A wind you will meet the maker of shortly combs the surface.`+vA(S,P,'ice')+`\n\nWalking between the heads, your boot connects — hard — with a face.\n\n<em>“WHY do you TRAMPLE me?”</em> it howls. <em>“Unless you come to add to the vengeance of Montaperti — WHY?”</em>`,
   choices:[
     { t:'“Forgive me. I didn’t see you. Nobody could.”', heart:1, go:'n_c9_walk' },
     { t:'Demand his name. Traitors forfeit anonymity.', go:'n_bocca' },
@@ -833,7 +909,7 @@ n_lucifer: { region:'lucifer', title:'The Emperor of the Dolorous Realm',
     { t:'Take hold of the fur. Climb.', go:'n_climb' },
     { pre:'speak the verse', verse:'v_brutes',
       t:'“Ye were not made to live like unto brutes.” Say it — at HIM — and then climb.',
-      star:2, go:'n_climb', fx:S=>S.flags.brutesAtDevil=1 },
+      star:1, go:'n_climb', fx:S=>S.flags.brutesAtDevil=1 },
     { t:'Kneel. Something this large must be owed something.', gleam:'pride',
       req:S=>S.sins.pride>=2, end:'e_frozen' },
     { t:'There — beside him in the ice — a seat-shaped absence. A throne going spare.',
@@ -897,12 +973,42 @@ n_exit2: { region:'lucifer', title:'The Threshold',
 n_purgatorio: { region:'purgatorio', title:'The Shore of the Mountain',
   text:`The poet’s face, when you finish, does something it has not done in nine circles: it forgets to be composed.\n\n<em>“A road,”</em> he repeats. <em>“Walked down to me.”</em> He looks at his hands — thirteen centuries of gesture — and laughs once, brief and real, the laugh of a man who wrote the whole epic and just got surprised by the last line.\n\n<em>“Then I am witnessed. Go. GO — the sky is wasting.”</em>\n\nYou step out — and it is dawn. Not night: DAWN, sapphire-colored, on a shore at the foot of a mountain that goes up farther than up usually goes. The little stream you followed empties at your feet into a sea that has never drowned anyone. Dew is on the grass, actual dew, and the first light is doing something to the water that nine circles tried and failed to make you forget was possible.\n\nA reed grows at the tideline, humble as a spoon. High, high above — terraces, and singing.`,
   choices:[
-    { t:'Wash the smoke of Hell from your face with the dew.', star:1, go:'n_beatrice_gate' },
-    { t:'Gird yourself with the reed, as the shore seems to want.', go:'n_beatrice_gate',
+    { t:'Wash the smoke of Hell from your face with the dew.', star:1, go:'n_terraces' },
+    { t:'Gird yourself with the reed, as the shore seems to want.', go:'n_terraces',
       fx:S=>S.flags.reed=1 },
     { t:'Speak, to the sea, every name you carried out.', heart:1, star:1,
-      go:'n_beatrice_gate', fx:S=>S.flags.seaNames=1 },
-    { t:'Look up the mountain. All the way up.', go:'n_beatrice_gate' },
+      go:'n_terraces', fx:S=>S.flags.seaNames=1 },
+    { t:'Look up the mountain. All the way up.', go:'n_terraces' },
+  ]},
+n_terraces: { region:'purgatorio', title:'The Mountain That Wants You to Climb It',
+  text:S=>(S.flags.reed?`(The reed you plucked has already regrown at the tideline behind you — the first thing in two worlds you have seen come back.)\n\n`:``)
+    +`The path spirals up and the light improves as you climb — not brighter exactly, but <em>better</em>, the way bread is better than the idea of bread. And everywhere on the mountain: singing. Not performance. Work-song. The penitents climb with their burdens and they sing the way rowers row.\n\nEverything here rhymes with the pit, deliberately, like an answer key. Souls carry weights — but upward. Faces are bent — over their own feet, watching the next step. There is smoke — from censers. You keep flinching at things that turn out to be kind.\n\nAhead, on the first terrace, a man toils bent double under a boulder easily twice the size of anything on the fourth circle’s wheel. He is the single most burdened creature you have seen since the ice.\n\nHe is humming.`,
+  choices:[
+    { t:'Approach the humming man under the boulder.', go:'n_terrace_soul' },
+    { t:'Join the work-song as you climb. Learn it wrong. Learn it again.', star:1,
+      go:'n_beatrice_gate' },
+    { t:'Climb in silence. Some gratitude has no tune yet.', heart:1, go:'n_beatrice_gate' },
+    { t:'Look back down — at the sea, and under the sea of cloud, the far smoke of the pit.',
+      go:'n_beatrice_gate', fx:S=>S.flags.lookedBackUp=1 },
+  ]},
+n_terrace_soul: { region:'purgatorio', title:'The Same Stone, Read Correctly',
+  text:`Up close the boulder is appalling — and the man under it greets you like a host at his own door, cheek pressed to the rock, one eye finding yours.\n\n<em>“New!”</em> he says, delighted. <em>“You have the walk of the long way round. Came up through the floor, did you? Then you’ve seen my cousins on the fourth terrace of THAT establishment — the wheel, the shouting, why-hoard-why-squander, round and round?”</em>\n\nYou say that you have.\n\n<em>“Same stone,”</em> he says, and pats it, actually pats it. <em>“That is the joke of the whole architecture, friend, and nobody down there is allowed to get it: same stone, same weight, same bent back. One difference only.”</em> He hitches it higher and takes another step up. <em>“Mine has a TOP. This is pride I’m carrying — forty years of it, I was a magnificent pain of a man — and every step up, the stone is one step lighter than my account of it. Theirs is a sentence. Mine is a CURE. Same medicine. Different label.”</em>`,
+  choices:[
+    { t:'“Let me carry it a while. You’ve earned a rest.”', heart:1, go:'n_terrace_soul2' },
+    { t:'“How long until the top?”', go:'n_terrace_soul2', fx:S=>S.flags.askedTop=1 },
+    { t:'Bless him — the first happy burdened man in the universe.', star:1,
+      go:'n_beatrice_gate' },
+    { t:'Climb on, lighter for no reason you could write down.', go:'n_beatrice_gate' },
+  ]},
+n_terrace_soul2: { region:'purgatorio', title:'The Whole Medicine',
+  text:S=>(S.flags.askedTop
+    ? `<em>“How long?”</em> He laughs, which costs him a step, which he pays gladly. <em>“As long as it takes — and understand, friend, up here that sentence is a COMFORT. Down where you walked, ‘forever’ is the horror. Up here, ‘as long as it takes’ means it TAKES. Arrives. Ends. I could climb this rock a thousand years and every one of them would rhyme with ‘almost.’”</em>\n\n`
+    : `He shakes his head — gently, so as not to spill the stone.\n\n<em>“Kindly meant, and the answer is no, and the no is the whole medicine. It is MINE to carry. Forty years I handed the weight of myself to porters — servants, sons, a wife, two confessors, one spectacularly patient mule. The carrying is not the punishment, friend. The carrying is the first thing I have ever finished myself.”</em>\n\n`)
+    +`He tips his head as far as the rock allows, which is his bow.\n\n<em>“Go up. She is waiting for you above the singing — everyone carrying anything on this mountain can feel it, like weather coming. And friend —”</em> one eye, bright as the dew — <em>“whatever you are still carrying from down there: keep carrying it. Just carry it UPHILL from now on. That is the entire difference between the two establishments.”</em>`,
+  choices:[
+    { t:'Climb to the light above the singing.', go:'n_beatrice_gate' },
+    { t:'Touch the stone once, lightly, for luck — his kind of luck.', star:1,
+      go:'n_beatrice_gate' },
   ]},
 n_beatrice_gate: { region:'beatrice', title:'She Comes Down',
   text:S=>{ const n=S.names.map(id=>souls[id].name);
