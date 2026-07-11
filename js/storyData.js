@@ -32,8 +32,21 @@ const regions = {
   ice:       { name:'The Ninth Circle — Cocytus',    depth:9 },
   lucifer:   { name:'The Bottom of the World',  depth:9 },
   stars:     { name:'The Way Out',              depth:10 },
-  purgatorio:{ name:'The Shore of the Mountain',depth:10 },
-  beatrice:  { name:'The Earthly Paradise',     depth:10 },
+  purgatorio:{ name:'The Shore of the Mountain',depth:10, terrace:0 },
+  beatrice:  { name:'The Earthly Paradise',     depth:10, terrace:9 },
+  /* ----- ACT II: the Mountain ----- */
+  pgate:     { name:'The Gate of the Mountain', depth:10, terrace:1 },
+  t_pride:   { name:'The First Terrace — the Proud',     depth:10, terrace:2 },
+  t_envy:    { name:'The Second Terrace — the Envious',  depth:10, terrace:3 },
+  t_wrath:   { name:'The Third Terrace — the Smoke',     depth:10, terrace:4 },
+  t_sloth:   { name:'The Fourth Terrace — the Runners',  depth:10, terrace:5 },
+  t_greed:   { name:'The Fifth Terrace — the Bound',     depth:10, terrace:6 },
+  t_gluttony:{ name:'The Sixth Terrace — the Hungering', depth:10, terrace:7 },
+  t_lust:    { name:'The Seventh Terrace — the Fire',    depth:10, terrace:8 },
+  pnight:    { name:'The Mountain by Night',    depth:10, terrace:4 },
+  eden:      { name:'The Ancient Forest',       depth:10, terrace:9 },
+  pageant:   { name:'The Procession',           depth:10, terrace:9 },
+  lethe:     { name:'The Two Rivers',           depth:10, terrace:9 },
 };
 
 /* ---------------- verses (exact Longfellow, verified against text/) ------ */
@@ -52,6 +65,15 @@ const verses = {
     lines:['Thence we came forth to rebehold the stars.'] },
   v_love:   { title:'The Last Verse of All', src:'Paradiso, Canto XXXIII',
     lines:['The Love which moves the sun and the other stars.'] },
+  /* ----- ACT II verses ----- */
+  v_pia:    { title:'The Pia’s Whole Life', src:'Purgatorio, Canto V',
+    lines:['Do thou remember me who am the Pia;','Siena made me, unmade me Maremma;'] },
+  v_wind:   { title:'Oderisi’s Wind', src:'Purgatorio, Canto XI',
+    lines:['Naught is this mundane rumour but a breath','Of wind, that comes now this way and now that,','And changes name, because it changes side.'] },
+  v_crown:  { title:'The Guide’s Last Verse', src:'Purgatorio, Canto XXVII',
+    lines:['Thee o’er thyself I therefore crown and mitre!'] },
+  v_pure:   { title:'The Mountain’s Last Line', src:'Purgatorio, Canto XXXIII',
+    lines:['Pure and disposed to mount unto the stars.'] },
 };
 const VQ = id => '<span class="verse-quote">' + verses[id].lines.join('<br>') +
   '</span>';
@@ -144,6 +166,32 @@ const souls = {
     absolveChoice:'Spend a candle on the frost around his eyes.',
     punishChoice:'Let the blade argue with the ice.' },
   s_virgil:   { name:'Virgil, the Guide',   circle:'Circle I — Limbo' },
+};
+
+/* ---------------- ACT II: prayers of the mountain ------------------------ */
+/* The inversion of Remembrance: the penitents don't beg to be remembered —
+   they beg you to carry requests UP to the living. Prayers weigh nothing.
+   You may carry as many as you are given. That is the whole difference. */
+const prayers = {
+  pr_manfred:{ giver:'Manfred', ask:'Tell my daughter Constance her father is not lost — only slow.' },
+  pr_pia:    { giver:'La Pia',  ask:'Remember me, who am the Pia. That is the whole request.' },
+  pr_belacqua:{giver:'Belacqua',ask:'If someone up there prays for me — fine. No rush. Truly.' },
+  pr_oderisi:{ giver:'Oderisi', ask:'Not for me. For Provenzan, who out-shone me. Pray HIS name.' },
+  pr_sapia:  { giver:'Sapia',   ask:'Tell my kin in Siena that envy ends. Tell them how it ends.' },
+  pr_marco:  { giver:'Marco Lombardo', ask:'Pray for me when you stand in the sweet air and choose freely.' },
+  pr_arnaut: { giver:'Arnaut',  ask:'Be mindful, in due season, of my pain.' },
+  pr_hollow: { giver:'The Hollowed Singer', ask:'My sister sets two plates still. Tell her one is enough now.' },
+};
+const burdenTotal = S => { let t=0; for (const k in (S.burdens||{})) t+=S.burdens[k]; return t; };
+const psWiped = S => Object.keys(S.ps||{}).filter(k=>S.ps[k]).length;
+const seedAscent = (S,src) => {
+  S.act='purgatorio'; S.pace=0; S.dayPhase=0; S.prayers=S.prayers||[];
+  S.ps={pride:0,envy:0,wrath:0,sloth:0,greed:0,gluttony:0,lust:0};
+  S.burdens={};
+  for (const k in S.ps){
+    const v = src && src[k] ? src[k] : 2;
+    S.burdens[k]=Math.max(1,Math.min(6,Math.ceil(v)));
+  }
 };
 
 /* ---------------- helpers used by node functions ------------------------- */
@@ -1050,14 +1098,123 @@ n_exit2: { region:'lucifer', motif:'s_virgil', title:'The Threshold',
 
 /* ---------------- PURGATORIO (true-ending path) ---------------- */
 n_purgatorio: { region:'purgatorio', title:'The Shore of the Mountain',
-  text:`The poet’s face, when you finish, does something it has not done in nine circles: it forgets to be composed.\n\n<em>“A road,”</em> he repeats. <em>“Walked down to me.”</em> He looks at his hands — thirteen centuries of gesture — and laughs once, brief and real, the laugh of a man who wrote the whole epic and just got surprised by the last line.\n\n<em>“Then I am witnessed. Go. GO — the sky is wasting.”</em>\n\nYou step out — and it is dawn. Not night: DAWN, sapphire-colored, on a shore at the foot of a mountain that goes up farther than up usually goes. The little stream you followed empties at your feet into a sea that has never drowned anyone. Dew is on the grass, actual dew, and the first light is doing something to the water that nine circles tried and failed to make you forget was possible.\n\nA reed grows at the tideline, humble as a spoon. High, high above — terraces, and singing.`,
+  enter:(S,P)=>{ if (S.act!=='purgatorio') seedAscent(S, S.flags.ascentDirect
+      ? ((P.lastRun&&P.lastRun.sins)||P.residue) : S.sins); },
+  text:(S,P)=> (S.flags.ascentDirect
+    ? `You wake on sand, and the sand is warm, and for one long disbelieving minute that is the entire content of your mind.\n\nDawn. The true one — sapphire going gold at the hem — over a sea that has never drowned anyone. Behind you the little stream chuckles out of the rock, still wearing the dark of the world it drained through. Before you the mountain goes up farther than up usually goes: terrace above terrace above terrace, and from somewhere unreasonably high, singing.\n\nYou know this shore. You opened this road once, name by name, and the road has not forgotten. But the weight on your shoulders is new — or rather, it is old: everything you walked down with, waiting to be walked OFF.\n\nSomewhere on your brow, skin you cannot see is already itching in seven places.`
+    : `The poet’s face, when you finish, does something it has not done in nine circles: it forgets to be composed.\n\n<em>“A road,”</em> he repeats. <em>“Walked down to me.”</em> He looks at his hands — thirteen centuries of gesture — and laughs once, brief and real, the laugh of a man who wrote the whole epic and just got surprised by the last line.\n\n<em>“Then I am witnessed. Go. GO — the sky is wasting.”</em>\n\nYou step out — and it is dawn. Not night: DAWN, sapphire-colored, on a shore at the foot of a mountain that goes up farther than up usually goes. The little stream empties at your feet into a sea that has never drowned anyone. Dew is on the grass, actual dew.\n\nAnd the strangest thing: the weight of the descent came UP with you. Every sin you handled down there sits on your shoulders like luggage that followed you home. The mountain, you understand suddenly and completely, is where you carry it OFF.\n\nA reed grows at the tideline, humble as a spoon. High above — terraces, and singing.`),
   choices:[
-    { t:'Wash the smoke of Hell from your face with the dew.', star:1, go:'n_terraces' },
-    { t:'Gird yourself with the reed, as the shore seems to want.', go:'n_terraces',
+    { t:'Wash the smoke of Hell from your face with the dew.', pace:-1, go:'p_casella' },
+    { t:'Gird yourself with the reed, as the shore seems to want.', go:'p_casella',
       fx:S=>S.flags.reed=1 },
-    { t:'Speak, to the sea, every name you carried out.', heart:1, star:1,
-      go:'n_terraces', fx:S=>S.flags.seaNames=1 },
-    { t:'Look up the mountain. All the way up.', go:'n_terraces' },
+    { t:'Speak, to the sea, every name you ever carried.', pace:-1, go:'p_casella',
+      fx:S=>S.flags.seaNames=1 },
+    { t:'Start climbing. Now. The summit isn’t getting closer.', pace:2, go:'p_casella',
+      fx:S=>S.flags.rushed=1 },
+  ]},
+p_casella: { region:'purgatorio', title:'The Singer on the Shore',
+  text:(S,P)=>(S.flags.rushed?`You make it eleven steps up the first slope before the sound stops you — because some sounds are a hand on the shoulder.\n\n`:``)
+    +`A boat has landed down the shore — a boat of light, poled by something too bright to look at, already leaving — and the souls it carried stand blinking on the sand exactly as you once stood. New dead. First morning.\n\nOne of them is looking at you. Then he is laughing, and crossing the sand with his arms out, and you know the face the way you know a season: a musician. A friend of a friend. A voice from the good rooms of your life.\n\n<em>“YOU,”</em> says Casella. <em>“Walking. Breathing. Here. The paperwork of this must be SPECTACULAR.”</em>\n\nHe cannot embrace you — his arms close on morning air, three times, and he laughs at each failure like it is the best joke the universe has told him yet. And then, because you ask — because of course you ask — he plants his feet in the sand, and breathes in, and sings:\n${VQ('v_love').replace('The Love which moves the sun and the other stars.','“Love, that within my mind discourses with me—”')}The new dead drift toward the sound. So do you. The mountain, the climbing, the seven itching letters of your brow — everything politely stops mattering. It is the first beautiful man-made thing you have heard since the world above, and it hangs in the dawn like a held note deciding to be eternal.`,
+  choices:[
+    { t:'Listen. All of it. Every verse. The mountain has waited; it can wait.', pace:-2,
+      go:'p_cato', fx:S=>S.flags.heardSong=1 },
+    { t:'Listen one verse — then gently break the spell yourself.', go:'p_cato' },
+    { t:'Ask him to sing one of the verses you gathered below, instead.',
+      req:(S,P)=>P.versesFound.length>2, pace:-1, go:'p_cato',
+      fx:S=>S.flags.songOfYours=1 },
+    { t:'Keep walking uphill while the song fades behind you.', pace:1, go:'p_manfred' },
+  ]},
+p_cato: { region:'purgatorio', title:'The Warden of the Shore',
+  text:S=>(S.flags.songOfYours?`He hears your request, and his eyebrows climb — and then he sings it: a tercet you carried up out of the dark in your own mouth, returned to you in a trained voice under a real sky, and it is almost unbearable, hearing where the words always meant to live.\n\n`:``)
+    +`The voice that ends it is not loud. It does not need to be.\n\n<em>“What is this, laggard spirits?”</em>\n\nAn old man stands up-slope — alone, white-bearded, lit by four stars nobody else can see — and his disappointment could organize armies. <em>“What negligence, what standing still is this? Run to the mountain. The song is good. The song will be BETTER when you have earned your ears back.”</em>\n\nThe new dead scatter uphill like starlings. Casella grins at you, unrepentant to the last note — <em>“find me at the top; I take requests”</em> — and runs with them.\n\nThe old warden’s eyes pass over you. Living. Burdened. Brow already itching. He says nothing at all to you, which is somehow the largest compliment of your entire journey.`,
+  choices:[
+    { t:'Climb, as instructed. Properly. At a pace.', go:'p_manfred' },
+    { t:'Bow to the four stars over the old man first.', pace:-1, go:'p_manfred' },
+    { t:'Ask him — “Earned our EARS back?”', go:'p_manfred', fx:S=>S.flags.askedCato=1 },
+  ]},
+p_manfred: { region:'purgatorio', title:'The Slow Meadow',
+  text:S=>(S.flags.askedCato?`(He answered without turning: <em>“Beauty is wages, pilgrim. Up here everything you loved is wages. Climb, and be paid.”</em> You are going to be thinking about that for several terraces.)\n\n`:``)
+    +`The first slopes belong to the waiting dead — the late-repentant, the excommunicate, the ones who turned to Heaven at the last breath after a lifetime of walking the other way. They are not punished. They are simply... scheduled. A soul that made Heaven wait must wait in turn, thirty years for every one, unless the living pray the term shorter.\n\nOne of them comes to meet you: golden-haired, handsome, with a sword-wound splitting one eyebrow and another over his heart, both worn as casually as jewelry.\n\n<em>“Look at me well,”</em> he says, and smiles. <em>“I am Manfred. King, once. Excommunicated twice — they dug my very bones out of consecrated ground and threw them in the rain. And yet.”</em> He spreads his hands at the shore, the dawn, himself. <em>“At the end, dying, with everything unforgivable already done — I turned. One breath’s worth of turning. It was enough. THAT is the scandal of this mountain, pilgrim: it was enough.”</em>\n\nHe leans close, and the king drains out of his voice, and what is left is only a father:\n\n<em>“My daughter Constance is alive in the world. If you walk there again — tell her where I am. Tell her her father is not lost. Only slow.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Constance. Her father is found, and climbing. I’ll carry it.”',
+      pray:'pr_manfred', go:'p_belacqua' },
+    { t:'“One breath’s turning — after a whole life? That’s the arithmetic here?”',
+      go:'p_manfred2' },
+    { t:'Study the two wounds he wears like jewelry.', go:'p_belacqua',
+      fx:S=>S.flags.sawWounds=1 },
+    { t:'Move on. The itching on your brow is getting specific.', pace:1, go:'p_belacqua' },
+  ]},
+p_manfred2: { region:'purgatorio', title:'The Scandal of the Mountain',
+  text:`<em>“That’s the arithmetic,”</em> Manfred agrees, cheerfully. <em>“Offensive, isn’t it? You walked the basement. You saw the wheel, the marsh, the ICE — all that eternal bookkeeping, debit for debit. And up here a lifetime of wolf gets forgiven for one lamb’s breath at the finish.”</em>\n\nHe taps the split eyebrow.\n\n<em>“I earned the basement, friend. Ask anyone. And the arithmetic looked at me turning — one breath from the dark, already falling — and it ruled: LATE COUNTS. Late counts, up here. Write that over every gate in the world and half of Hell empties in a generation.”</em>\n\nHe looks up the impossible mountain, thirty waiting years for every year he made Heaven wait, and his smile does not dim by one candle.\n\n<em>“The prayer, though. The prayer makes it shorter. Constance. If you would.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Constance. I’ll say it where the living can hear.”',
+      pray:'pr_manfred', go:'p_belacqua' },
+    { t:'“Late counts.” Carry the sentence itself, and climb.', pace:-1, go:'p_belacqua' },
+  ]},
+p_belacqua: { region:'purgatorio', title:'The Man Behind the Rock',
+  text:`Up-slope the path narrows past a great boulder, and in the shade behind the boulder sit the only souls on this whole mountain who are not visibly going anywhere: a scatter of loungers, arms around knees, heads down, in postures of such committed rest that the rest itself looks load-bearing.\n\nOne of them raises his head exactly enough to see you, and no further.\n\n<em>“Well,”</em> he says. <em>“The athlete arrives.”</em>\n\nYou know that voice. Half the workshops of your old life had one: the craftsman who was better than everyone and moved slower than anyone, the genius of the unhurried. Belacqua. He watches you stand there radiating climb, and something in his face achieves the dignity of a philosophy.\n\n<em>“Sit down a minute,”</em> he offers. <em>“The mountain’s not going anywhere. I checked. That’s my whole job now — I sit here until a lifetime passes, because I sat down there until my lifetime passed. The sentence fits so well I can’t even resent it. Have you noticed that about this place? Every sentence FITS. It’s the tailoring of the thing that breaks you.”</em>`,
+  choices:[
+    { t:'Sit down a minute. One minute. He’s earned company.', pace:-1, go:'p_belacqua2' },
+    { t:'“Get up. Climb with me. The sentence shortens if you WALK it.”', go:'p_belacqua2',
+      fx:S=>S.flags.urgedBelacqua=1 },
+    { t:'Laugh — the first laugh since the dark wood — and keep climbing.', go:'p_lapia' },
+    { t:'Sit down with him properly. He’s right. The shade is perfect. The mountain isn’t going anywhere, and neither, for a long warm while, are you.',
+      gleam:'sloth', req:S=>(S.burdens&&S.burdens.sloth>=3), end:'pe_belacqua' },
+  ]},
+p_belacqua2: { region:'purgatorio', title:'No Rush. Truly.',
+  text:S=>(S.flags.urgedBelacqua
+    ? `<em>“Walk it,”</em> he repeats, marveling. <em>“You sound like my mother. God rest her — she’s probably three terraces up, power-walking.”</em> He shifts one arm to a fractionally more comfortable position, an operation he performs with the care of a man moving a piano.\n\n<em>“Here is the thing the hurriers never learn,”</em> he says. <em>“The gate won’t open for me yet. I sat too long in the sweet air; now the sweet air sits in me. That’s not laziness anymore, friend — that’s the SENTENCE. I can no more rush this than you could rush the ice down there. So I wait beautifully. It is the one thing I was always world-class at.”</em>\n\n`
+    : `You sit. The shade is, he is right, perfect. For one minute the mountain does not need you to be anything but a person leaning against a rock at dawn, and something in your shoulders un-ratchets that has been ratcheted since the she-wolf.\n\n<em>“There it is,”</em> Belacqua says quietly, watching you. <em>“That’s not sloth, what you just did. Sloth is refusing the climb. THAT was refueling for it. The terraces up there will teach you the difference with weights on. I got it explained to me for free, down here, and look how I’m using it.”</em>\n\n`)
+    +`As you rise to go he adds, to your back, with heroic indifference:\n\n<em>“If someone up there prays for me — fine. No rush. Truly. But if you happened to mention the name Belacqua to anyone of the praying persuasion, I would not technically object.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Belacqua. To someone of the praying persuasion. No rush.”',
+      pray:'pr_belacqua', go:'p_lapia' },
+    { t:'“Wait beautifully, then. It suits you.”', go:'p_lapia' },
+  ]},
+p_lapia: { region:'purgatorio', title:'The Third Voice',
+  text:`Higher, where the slope turns violent-steep and the sea below becomes a blue idea, the souls of the unshriven dead crowd the path — the ones taken suddenly, by blade or water, mid-sentence, mid-life, repenting in the half-second between the blow and the dark. They press around you like commuters, all asking at once: tell my brother, tell my wife, tell my town, pray, pray, PRAY —\n\nAnd through all of it, one voice, waiting its turn with perfect courtesy, and when the crowd finally parts there is a small woman with folded hands who says, in the tone of someone asking for a glass of water:\n\n${VQ('v_pia')}That is all. That is the whole request and the whole biography. Married to Maremma, dead of Maremma — pushed from a window of her husband’s castle, the crowd-whisper adds, so he could marry again — and she has compressed the entire catastrophe of her life into eleven words and a name, and she asks for nothing but the name.\n\nShe waits. The sea glitters four thousand feet below.`,
+  choices:[
+    { pre:'take the prayer', t:'“The Pia. Siena made her. I will say the whole of it, exactly as you said it.”',
+      pray:'pr_pia', learnVerse:'v_pia', go:'p_night1' },
+    { t:'Ask what he was like — the one who unmade her.', go:'p_lapia2' },
+    { t:'Bow. Some requests are too complete to add to.', pace:-1, go:'p_night1' },
+  ]},
+p_lapia2: { region:'purgatorio', title:'What She Does Not Say',
+  text:`La Pia considers the question with her head tilted, like a woman deciding whether a window needs curtains.\n\n<em>“He is not on this mountain,”</em> she says finally. <em>“That is the most I will say of him, and it is more than he said of me at the end.”</em>\n\nAnd then — because this is the terrace of the suddenly dead, who all learned the same lesson at the same speed — she adds, gently, as if YOU were the one who needed comforting:\n\n<em>“Do not carry him for me, pilgrim. I don’t. That is the trick of it, that nobody tells the living: the ones who unmake you are HEAVY, and you are allowed to set them down. I carried him exactly as far as the windowsill. The name I still carry is mine.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“The Pia. Hers, and only hers. I’ll carry it.”',
+      pray:'pr_pia', learnVerse:'v_pia', go:'p_night1' },
+    { t:'Set something of your own down on her terrace, quietly, before you climb.',
+      pace:-1, go:'p_night1', fx:S=>S.flags.setDown=1 },
+  ]},
+p_night1: { region:'pnight', title:'The First Night',
+  enter:S=>{ S.dayPhase=1; },
+  text:S=>`The sun goes down like a law being enacted. One moment you are climbing; the next your leading foot simply declines the instruction — not tired, FORBIDDEN. The mountain does not permit climbing in the dark. Every guidebook of your bones knows it at once: here, you rise with the light or not at all.\n\n${S.flags.setDown?`(Whatever you set down on the Pia’s terrace, you notice, has not followed you up. Some luggage only needed permission.)\n\n`:``}You find a hollow in the warm rock as the stars come out — MORE stars than the world above, arranged in constellations you almost recognize, as if someone had corrected them. The singing on the terraces above quiets to a hum, then to breathing.\n\nAnd you dream. You dream of a golden eagle, terrible and patient, wheeling down out of the corrected stars — and it does not strike you. It gathers you. Up through the dark, wings like furnace doors, higher than the night, and just as the burning begins — the burning of nearness to something no pilgrim spells — the dream sets you down with impossible gentleness, the way a mother moves a sleeping child.`,
+  choices:[
+    { t:'Wake.', go:'p_gate' },
+  ]},
+p_gate: { region:'pgate', title:'The Gate of the Mountain',
+  enter:S=>{ S.dayPhase=2; },
+  text:`You wake two thousand feet higher than you slept.\n\nCarried. While you dreamed of the eagle, something real did the gathering — and set you here, on a shelf of white stone before three steps and a gate, in the first light of the second dawn.\n\nThe three steps: one of mirror-white marble, polished until it shows you yourself more honestly than you have ever been shown — one of black stone, cracked through like a thing that grieved — one of porphyry red as the blood that mends. And on the topmost step, an angel with a face too bright to be a face, holding a naked sword, seated on a threshold of diamond.\n\nYou climb the three steps because there is nothing else in the universe to do. The angel rises. The sword comes down — not to cut. To WRITE.\n\nSeven letters on your brow, one for each weight on your back: P, and P, and P, and P, and P, and P, and P. <em>Peccatum.</em> The itching resolves into script.\n\n<em>“Wash these wounds within,”</em> the angel says, in a voice like a struck bell forgiving the hammer. Two keys turn — one silver, one gold — and the gate swings open on darkness that goes UP.\n\n<em>“Enter. And do not look back. Whoever looks back at what they carried — returns outside, and begins again.”</em>`,
+  choices:[
+    { t:'Walk through, eyes forward, into the mountain.', go:'t1_arrive' },
+    { t:'One look back — the sea, the shore, the whole road that brought you—',
+      go:'p_lookback' },
+    { t:'Touch the seven letters first. Learn their weight by heart.', pace:-1,
+      go:'t1_arrive', fx:S=>S.flags.touchedPs=1 },
+  ]},
+p_lookback: { region:'pgate', title:'The Rule Is the Rule',
+  text:`The sea IS beautiful. That is the terrible fairness of the trap.\n\nYou get one full second of it — the shore, the dawn-road across the water, the whole geography of everything you survived — and then the gate is not in front of you anymore, and the steps are not under you, and the wind is explaining, in the mountain’s patient grammar, that you are standing on warm sand.\n\nThe shore. The beginning. The reed, regrown, nods at the tideline — oh, it has seen this before.\n\nFar above, terraces. Singing. The seven letters still itch on your brow: the mountain does not take back its writing, only its progress. Somewhere behind a boulder on the first slope, a voice you know is already calling, with immense, immense satisfaction:\n\n<em>“Sit down a minute. The mountain’s not going anywhere. I CHECKED.”</em>`,
+  choices:[
+    { t:'Laugh. Bow to the mountain’s rulebook. Climb again.', pace:-1, go:'p_gate2' },
+    { t:'Swear — properly, from the basement vocabulary — and climb again.',
+      fx:S=>{S.burdens.wrath=Math.min(6,(S.burdens.wrath||1)+1);}, go:'p_gate2' },
+  ]},
+p_gate2: { region:'pgate', title:'The Second Approach',
+  enter:S=>{ S.dayPhase=2; },
+  text:`The mountain does not make the return climb harder. It does not need to. You walk the slow meadow again — Manfred salutes with two fingers off his split eyebrow, Belacqua does not visibly move but radiates I-told-you-so at geological wavelength — and the three steps and the angel and the sword are exactly where they were, patient as furniture.\n\nThe angel writes no new letters. The seven you have are the seven you get.\n\n<em>“Enter,”</em> the bell-voice says again. And then — was that... did the too-bright face incline, one degree, toward humor? — <em>“Eyes forward, this time.”</em>`,
+  choices:[
+    { t:'Eyes forward. Through the gate. Up.', go:'t1_arrive' },
   ]},
 n_terraces: { region:'purgatorio', title:'The Mountain That Wants You to Climb It',
   text:S=>(S.flags.reed?`(The reed you plucked has already regrown at the tideline behind you — the first thing in two worlds you have seen come back.)\n\n`:``)
@@ -1065,45 +1222,401 @@ n_terraces: { region:'purgatorio', title:'The Mountain That Wants You to Climb I
   choices:[
     { t:'Approach the humming man under the boulder.', go:'n_terrace_soul' },
     { t:'Join the work-song as you climb. Learn it wrong. Learn it again.', star:1,
-      go:'n_beatrice_gate' },
-    { t:'Climb in silence. Some gratitude has no tune yet.', heart:1, go:'n_beatrice_gate' },
+      go:'t1_angel' },
+    { t:'Climb in silence. Some gratitude has no tune yet.', heart:1, go:'t1_angel' },
     { t:'Look back down — at the sea, and under the sea of cloud, the far smoke of the pit.',
-      go:'n_beatrice_gate', fx:S=>S.flags.lookedBackUp=1 },
+      go:'t1_angel', fx:S=>S.flags.lookedBackUp=1 },
   ]},
-n_terrace_soul: { region:'purgatorio', title:'The Same Stone, Read Correctly',
+n_terrace_soul: { region:'t_pride', title:'The Same Stone, Read Correctly',
   text:`Up close the boulder is appalling — and the man under it greets you like a host at his own door, cheek pressed to the rock, one eye finding yours.\n\n<em>“New!”</em> he says, delighted. <em>“You have the walk of the long way round. Came up through the floor, did you? Then you’ve seen my cousins on the fourth terrace of THAT establishment — the wheel, the shouting, why-hoard-why-squander, round and round?”</em>\n\nYou say that you have.\n\n<em>“Same stone,”</em> he says, and pats it, actually pats it. <em>“That is the joke of the whole architecture, friend, and nobody down there is allowed to get it: same stone, same weight, same bent back. One difference only.”</em> He hitches it higher and takes another step up. <em>“Mine has a TOP. This is pride I’m carrying — forty years of it, I was a magnificent pain of a man — and every step up, the stone is one step lighter than my account of it. Theirs is a sentence. Mine is a CURE. Same medicine. Different label.”</em>`,
   choices:[
     { t:'“Let me carry it a while. You’ve earned a rest.”', heart:1, go:'n_terrace_soul2' },
     { t:'“How long until the top?”', go:'n_terrace_soul2', fx:S=>S.flags.askedTop=1 },
-    { t:'Bless him — the first happy burdened man in the universe.', star:1,
-      go:'n_beatrice_gate' },
-    { t:'Climb on, lighter for no reason you could write down.', go:'n_beatrice_gate' },
+    { t:'Bless him — the first happy burdened man in the universe.', burden:{pride:-1},
+      go:'t1_oderisi' },
+    { t:'Climb on, lighter for no reason you could write down.', go:'t1_oderisi' },
   ]},
-n_terrace_soul2: { region:'purgatorio', title:'The Whole Medicine',
+n_terrace_soul2: { region:'t_pride', title:'The Whole Medicine',
   text:S=>(S.flags.askedTop
     ? `<em>“How long?”</em> He laughs, which costs him a step, which he pays gladly. <em>“As long as it takes — and understand, friend, up here that sentence is a COMFORT. Down where you walked, ‘forever’ is the horror. Up here, ‘as long as it takes’ means it TAKES. Arrives. Ends. I could climb this rock a thousand years and every one of them would rhyme with ‘almost.’”</em>\n\n`
     : `He shakes his head — gently, so as not to spill the stone.\n\n<em>“Kindly meant, and the answer is no, and the no is the whole medicine. It is MINE to carry. Forty years I handed the weight of myself to porters — servants, sons, a wife, two confessors, one spectacularly patient mule. The carrying is not the punishment, friend. The carrying is the first thing I have ever finished myself.”</em>\n\n`)
     +`He tips his head as far as the rock allows, which is his bow.\n\n<em>“Go up. She is waiting for you above the singing — everyone carrying anything on this mountain can feel it, like weather coming. And friend —”</em> one eye, bright as the dew — <em>“whatever you are still carrying from down there: keep carrying it. Just carry it UPHILL from now on. That is the entire difference between the two establishments.”</em>`,
   choices:[
-    { t:'Climb to the light above the singing.', go:'n_beatrice_gate' },
-    { t:'Touch the stone once, lightly, for luck — his kind of luck.', star:1,
-      go:'n_beatrice_gate' },
+    { t:'Climb to the light above the singing.', go:'t1_oderisi' },
+    { t:'Touch the stone once, lightly, for luck — his kind of luck.', burden:{pride:-1},
+      go:'t1_oderisi' },
   ]},
-n_beatrice_gate: { region:'beatrice', title:'She Comes Down',
-  text:S=>{ const n=S.names.map(id=>souls[id].name);
-    return (S.flags.seaNames?`You say the names to the water — ${n.join(', ')} — and the sea, which has heard every name ever wept over it, takes them without swallowing them. Somewhere up the terraces, the singing changes key, as if making room.\n\n`:``)
-      +`She does not descend the mountain. The mountain, as far as you can tell, descends slightly toward HER.\n\nBeatrice. The lady of the light the poet spoke of in the first dark — the one who wept her way down to Limbo to hire a poet for a lost soul she had never stopped watching. Her eyes are the reason the word “star” needed inventing.\n\nShe looks at you — all of you at once, the ledger and the heart and the names in your pockets — and the look is not a greeting. It is an ACCOUNTING. The whole journey stands in the scale: every soul you judged, every tear you spent or hoarded, every name you carried or let fall.`; },
+eden_matilda: { region:'eden', title:'The Ancient Forest',
+  text:S=>(S.flags.huggedCrown?`(He permitted the embrace entirely this time — both arms, the full Roman surrender of it — and said, into your shoulder, so quietly it may have been for himself: <em>“Yes. Well. Go on, then.”</em>)\n\n`:S.flags.askedStay?`(<em>“Right here,”</em> he agreed. And did not say for how long, and you did not ask, because the mountain had already told you, gently, twice.)\n\n`:``)
+    +`The summit is a forest — but the word does no justice. This is what forests have been trying to say all along: green with its license renewed, air so tender it forgives the lungs breathing it, a canopy that files the young sun into slow gold coins on the grass. The wood at the top of the world, older than weather. The first garden, kept on, under new management.\n\nA stream crosses your path, small and absolutely clear, and on the far side of it a young woman is gathering flowers, singing, hands never still — the dream, delivered.\n\n<em>“You made it up,”</em> Matilda says, as if resuming a conversation. <em>“Good. This is the wood men remember wrong on purpose, because remembering it right hurts too much. The water at your feet is Lethe. It takes away the memory of sin — drunk at the proper hour, in the proper order. And someone,”</em> — she looks past your shoulder, smiling like a herald — <em>“has been waiting to see you drink.”</em>\n\nDown the stream-bank, light is gathering. Not sunrise. Procession.`,
   choices:[
-    { t:'Stand and be weighed. Hide nothing. You learned that at Minos.', go:'n_beatrice_verdict' },
-    { t:'Kneel first.', star:1, go:'n_beatrice_verdict' },
-    { t:'“Before anything — thank you for the poet. Someone should thank you for the poet.”',
-      heart:1, go:'n_beatrice_verdict' },
+    { t:'Turn to see the light.', go:'eden_pageant' },
+    { t:'“Lethe takes the memory of sin. ALL of it? Even what I did below?”', go:'eden_matilda2' },
+    { t:'One handful of flowers first — Leah’s trade, learned from a dream.', pace:-1,
+      go:'eden_pageant', fx:S=>S.flags.gatheredFlowers=1 },
+  ]},
+eden_matilda2: { region:'eden', title:'What the River Takes',
+  text:`<em>“All the STING of it,”</em> Matilda says, precise as a druggist. <em>“Not the lesson. You will remember that you fell; you will lose the taste of falling. The dead you judged below will remember you the way the healed remember a surgeon — the cut forgotten, the walking kept.”</em>\n\nShe reads your face — the ledger-keeper's face, the witness's face, the face that carried names through the dark and verdicts across descents — and adds, kindly:\n\n<em>“You are wondering if forgetting is a betrayal of the witnessing. It is the opposite, pilgrim. You carried it all so it could be SET DOWN somewhere that keeps it better than a scar does. That is what this water is. The mountain's whole filing system, running clear.”</em>`,
+  choices:[
+    { t:'Turn to the gathering light.', go:'eden_pageant' },
+  ]},
+eden_pageant: { region:'pageant', title:'The Procession',
+  text:`It comes down the far bank like a cathedral that learned to walk.\n\nSeven candlesticks of living flame, tall as masts, painting the air behind them in seven streaming bands. Elders in white, crowned in lilies, walking two by two and singing to a music that the seven bands seem to be the notation of. Four creatures winged with eyes — eyes all over, seeing everything, blinking nothing away. And drawn between them, by a griffin — eagle into lion, gold into white-and-crimson, two natures in one unhurried body — a chariot, empty, brighter than the sun has any patent on.\n\nThe whole forest attends. The stream stops chattering. ${'​'}Petals begin to fall from nowhere at all, a hundred hands scattering blossom above and within the light, and voices — every voice, the elders, the creatures, the wood itself — rise into one summons:\n\n<em>“Veni, sponsa. BENEDICTUS QUI VENIS—”</em>\n\nAnd in the heart of the falling flowers, on the chariot, where nothing had been standing — someone is standing. Olive crown over a white veil. A gown the color of living flame.\n\nYou know her before you see one line of her face. You have known her since a star out-burned the rest above a dark wood, and banked itself, saving its light for later.\n\nLater is now.`,
+  choices:[
+    { t:'Turn to Virgil — this, HE has to see, after thirteen centuries of—', go:'eden_gone' },
+    { t:'Step toward the chariot, heart first.', go:'eden_gone', fx:S=>S.flags.steppedFirst=1 },
+  ]},
+eden_gone: { region:'pageant', title:'The Empty Place',
+  enter:S=>{ S.flags.virgilGone=1; },
+  text:S=>(S.flags.steppedFirst
+    ? `You step toward her — one step, two — and the joy is so total it demands a witness, and you turn, the old reflex of the whole long road, to share it with the one who carried you here:\n\n`
+    : `You turn, the words already leaving — <em>“Virgil, LOOK, it's her, it's—”</em>\n\n`)
+    +`Grass. Morning light. The stair down the summit, empty all the way to its turning.\n\nHe is gone. He watched you walk in — a very good view, he said — and somewhere between the griffin and the olive crown, quietly, without one word of farewell beyond the several thousand he had already spent on you, the poet of Rome turned and started the long walk home to the excellent company.\n\nHe does not appear when you call. (You call.) ${S.flags.statius?`Statius's hand lands on your shoulder — the finished man, weeping freely himself, five hundred years of wanting to meet that exact departed shadow. <em>“So THAT was— oh, friend. Oh, friend. He walked me up my whole last terrace and I never—”</em>`:`The forest holds you kindly while you learn it.`}\n\nAnd from the chariot, through the falling flowers, comes a voice you have never heard with your ears before — and it is not comforting. It is TERRIBLE, the way the eagle in the first dream was terrible: love at a magnitude that has no interest in being safe. Your name. Just your name — {NAME} — pronounced by the person who wept it once in Limbo, thirteen centuries of patience ago.\n\n<em>“Do not weep yet for HIM,”</em> Beatrice says. <em>“There is a nearer weeping to do first. Look at me. Look at ME, {NAME}: I am. I am she. How did you DARE the mountain — and how did it take you THIS LONG to climb it?”</em>`,
+  choices:[
+    { t:'Weep — for the going of him and the arrival of her, one water.', go:'p_lethe',
+      fx:S=>S.flags.weptBoth=1 },
+    { t:'Stand and be seen. Hide nothing. You learned that at Minos.', go:'p_lethe' },
+    { t:'“He kept every promise on the way to keeping yours. Be kind about what he could not do.”',
+      pace:-1, go:'p_lethe', fx:S=>S.flags.defendedVirgil=1 },
   ]},
 n_beatrice_verdict: { region:'beatrice', title:'The Weighing',
-  text:`The dawn holds still for it.`,
+  text:(S,P)=>(S.flags.defendedVirgil?`Something moves behind the veil — the first un-stern thing. <em>“I know what I asked of him,”</em> she says, more quietly. <em>“I have kept the account of it since Limbo. He will not go unthanked forever, pilgrim. Now—”</em>\n\n`:``)
+    +`She looks at you — all of you at once: the ledger and the heart, the burdens walked off and the letters wiped, the prayers riding your breath and every soul you judged in the deep basement of the world.\n\nThe dawn holds still for it.`,
   choices:[
     { t:'…', go:null,
-      end:S=> S.heart<=-4 ? 'e_beatrice_stone' : S.heart>=5 ? 'e_beatrice_flood' : 'e_beatrice_clear' },
+      end:(S,P)=>{
+        const perfect = psWiped(S)>=7 && (S.prayers||[]).length>=5
+          && !S.sirenTaken && Math.abs(S.pace||0)<=4 && Math.abs(S.heart||0)<=4;
+        if (perfect) return 'pe_paradiso';
+        if (burdenTotal(S)>=8 || S.heart<=-4) return 'e_beatrice_stone';
+        if (Math.abs(S.pace||0)>=5 || S.heart>=5) return 'e_beatrice_flood';
+        return 'e_beatrice_clear';
+      } },
+  ]},
+p_lethe: { region:'lethe', title:'The First River',
+  text:(S,P)=>{
+    const harsh=Object.keys(P.verdicts||{}).filter(k=>['condemn','punish'].includes(P.verdicts[k].last)).length;
+    return `(You do not remember agreeing to enter the water. That is the first thing Lethe takes: the seam between deciding and being carried.)\n\nMatilda draws you across, light as a reed herself, your chin just above the current — and the river begins its patient subtraction. Not memory. STING. The kick you gave a frozen face at the bottom of the world dissolves off the memory like rust off iron; the fact stays, bright and clean and useless for wounding you ever again.\n\n${harsh>0?`And somewhere in the water's ledger, older business closes: the ${harsh} soul${harsh>1?'s':''} you struck or sentenced in the deep dark lose their grievance-copy of you. When you meet them again — and the architecture being what it is, you will — they will remember a pilgrim who came back changed, and nothing sharper. The river keeps the sharp part. It is what rivers are FOR.`:`The water finds surprisingly little to keep. You walked the dark gently, it seems, by the river's accounting — the current hums over you like a clerk pleased to find the books already balanced.`}\n\nOn the far bank they are singing <em>Asperges me</em>, and four ladies dance you dry, and the veil, ahead, is lifting.`; },
+  choices:[
+    { t:'Drink, as instructed, at the proper hour.',
+      fx:(S,P)=>{ for (const k in (P.verdicts||{})) if (['condemn','punish'].includes(P.verdicts[k].last)) delete P.verdicts[k]; },
+      go:'p_eunoe' },
+  ]},
+p_eunoe: { region:'lethe', title:'The Second River',
+  text:`There is a second water — Eunoe, twin and answer — and Matilda draws you through that one too, because the mountain never subtracts without restoring.\n\nWhere Lethe took the sting, Eunoe returns the GOOD, sharpened: every kindness you did in two realms, remastered. The dry breath you bought a glutton in the rain. One leaf turning green in a gray wood. A sullen woman's song, finally rising. The names — every name — said at dinners, at seas, at thresholds, each one arriving back in you like bread.\n\nYou come up from the second river remade the way the poem promises — even as new trees renewed with new foliage — and she is waiting on the bank, veil lifted now, eyes the reason the word needed inventing, and beyond her the sky goes up and UP, terraceless, starred even in daylight, ready.\n${VQ('v_pure')}`,
+  choices:[
+    { t:'Rise, pure and disposed, to whatever mounts from here.', learnVerse:'v_pure',
+      go:'n_beatrice_verdict' },
+  ]},
+
+/* ================= ACT II: THE TERRACES ================= */
+t1_arrive: { region:'t_pride', title:'The Terrace of the Bent',
+  text:`The first terrace is white marble, and the marble is a gallery: carved into the inner cliff, life-size and better than life, are the humble — annunciations, kings dancing before arks, emperors halting armies for a widow’s grievance — sculpture so perfect the carved people seem paused rather than made.\n\nAnd past the gallery come the penitents, and your whole chest re-learns the fourth circle in one look: they carry STONES. Great slabs on their backs, bent double beneath them, exactly like the wheel of the greedy — except.\n\nExcept they are climbing. Except the stones are shrinking — imperceptibly, the way glaciers move, but shrinking. Except that under the crushing weight, in voices flattened to the width of a floor, they are saying a prayer with the word OUR in it, and meaning the OUR.\n\nOn your brow, the first P burns faintly, recognizing home.`,
+  choices:[
+    { t:'Take up a stone from the terrace’s pile, and walk a circuit bent.', burden:{pride:-2},
+      pace:0, go:'t1_oderisi', fx:S=>S.flags.stoneWalked=1 },
+    { t:'Walk upright beside the bent, and listen to the flattened prayer.', go:'t1_oderisi' },
+    { t:'Study the carved gallery first — the annunciation, the dancing king.', pace:-1,
+      burden:{pride:-1}, go:'t1_oderisi' },
+    { t:'A familiar humming, further along — a man under a boulder twice anyone’s.', go:'n_terrace_soul' },
+  ]},
+t1_oderisi: { region:'t_pride', title:'Oderisi of Gubbio',
+  text:S=>(S.flags.stoneWalked?`(The stone is worse than anything the fourth circle showed you, because you can PUT IT DOWN and keep not doing so. When you finally set it back on the pile, your spine sings a hymn of its own.)\n\n`:``)
+    +`One of the bent walks beside you — or rather, you walk beside him, matching his crushed half-steps. From under his slab he cranes to see you, and his face lights with what, in an unbent man, would be recognition.\n\n<em>“The living pilgrim,”</em> he says. <em>“Even here we heard. Do you know me? No — be honest — you don’t, and THAT, friend, is the entire curriculum of this terrace. I am Oderisi. Illuminator of Gubbio. In my day, if you wanted a manuscript to glow, you wanted ME. ‘The honor of that art,’ they called me. I dined on the phrase for thirty years.”</em>\n\nHe laughs, and the slab creaks.\n\n<em>“Then Franco of Bologna made pages that made mine look like practice. And someday soon a boy called Giotto will hang paint on a wall and empty every church of my name in a season. Listen — I have thought about this under rock for a long time, so take it whole:”</em>\n${VQ('v_wind')}`,
+  choices:[
+    { t:'“But I carried NAMES out of Hell. Remembrance was the whole road. Is that— was that wind?”',
+      go:'t1_oderisi2' },
+    { pre:'take the prayer', t:'“Then I’ll spend a breath of the wind. Whose name should it say?”',
+      pray:'pr_oderisi', learnVerse:'v_wind', go:'t1_angel' },
+    { t:'Walk with him in silence, bent to his height.', burden:{pride:-1}, pace:-1,
+      go:'t1_angel' },
+  ]},
+t1_oderisi2: { region:'t_pride', title:'The Answer Under the Rock',
+  text:`Oderisi is quiet for three crushed steps, and when he answers there is no wind in it at all.\n\n<em>“No. Oh, no, friend — you have it inside out. FAME is wind: the name traveling on its own, gathering size, serving no one but the named. What you did down there—”</em> the slab creaks as he tries, and fails, to gesture — <em>“you carried the names TO someone. To the living. For the DEAD’S sake. That is not rumour, pilgrim; that is testimony. The wind blows past. A witness ARRIVES.”</em>\n\n<em>“Here is the test, since you’re collecting things: my name will die. Franco’s will die. Giotto’s — give it six hundred years, it dies too. Does that grieve you?”</em>\n\nYou consider it honestly. The marble gallery glows. The stones shrink at glacier-speed.\n\n<em>“And the kindness you did the dead — when YOUR name dies, does the kindness?”</em>\n\nHe watches you arrive at it, delighted as a teacher at the exact moment the student stops needing him.\n\n<em>“There it is. Now: I have a name to spend, and it isn’t mine. Provenzan Salvani, who out-shone me alive and out-humbled me dead. Pray HIS, if you pray any.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Provenzan. Not yours — his. I see the lesson, and I’ll carry it anyway.”',
+      pray:'pr_oderisi', learnVerse:'v_wind', burden:{pride:-1}, go:'t1_angel' },
+    { t:'“Your name dies. The pages you lit don’t know that.”', pace:-1, go:'t1_angel' },
+  ]},
+t1_angel: { region:'t_pride', title:'The First Wing',
+  text:(S,P)=>`At the far stair an angel stands in the white glare of its own courtesy — and this one’s whole office is a single gesture: a brush of the wing across the brow of whoever has walked the terrace down to its true weight.\n\nThe bent queue up the stair. Each one, passing, loses a letter — and each one straightens by a degree you can SEE, as if a decade were being helped off their shoulders like a coat.\n\n${(S.burdens&&S.burdens.pride<=1)?`The angel looks at you, and the wing lifts.`:`The angel looks at you — looks specifically at your brow, then at the set of your shoulders — and the wing does not move. Not refusal. Scheduling. The stone still shows.`}`,
+  choices:[
+    { pre:'the first letter', t:'Bow your head, and feel the wing pass — and the first P leave your brow like a splinter drawn.',
+      req:S=>S.burdens&&S.burdens.pride<=1, wipeP:'pride', go:'t2_arrive' },
+    { t:'Walk another circuit bent under stone, until the weight is true.',
+      req:S=>S.burdens&&S.burdens.pride>1, burden:{pride:-2}, pace:1, go:'t1_angel' },
+    { t:'Climb on regardless, letter and all. The mountain permits it — the letter keeps.',
+      req:S=>S.burdens&&S.burdens.pride>1, go:'t2_arrive' },
+  ]},
+t2_arrive: { region:'t_envy', title:'The Terrace of Sewn Eyes',
+  text:`The second terrace is the color of a bruise healing — livid stone, no gallery, no carvings, because carvings are for eyes and eyes are the whole indictment here.\n\nThe penitents sit in a row against the cliff like beggars at a church door, shoulder against shoulder, each one leaning on the next. They wear haircloth. Their faces tilt at the sun they cannot see. Their eyelids—\n\nTheir eyelids are sewn. Iron wire, neat as a falconer’s work, and from under the stitching tears find the gaps and glaze the wire and dry there.\n\nThey lived by looking sideways — at neighbors’ harvests, neighbors’ wives, neighbors’ luck — and rejoiced at every downfall in view. Now the view is confiscated, and they lean, blind, on the very neighbors they could not forgive for existing, and are held up by them, all day, every day, until leaning stops being punishment and becomes the cure.\n\nSomewhere down the row, one of them is asking the air: <em>“Is someone there? Someone breathing? Oh — LIVING? Come. Come, I won’t weep on you. Well. I’ll try.”</em>`,
+  choices:[
+    { t:'Go to the voice.', go:'t2_sapia' },
+    { t:'First: close your own eyes, and walk the terrace-edge blind, trusting.',
+      burden:{envy:-2}, go:'t2_sapia', fx:S=>S.flags.walkedBlind=1 },
+    { t:'Sit in the row, shoulder to shoulder, and let a stranger lean on you.',
+      burden:{envy:-1}, pace:-1, go:'t2_sapia' },
+  ]},
+t2_sapia: { region:'t_envy', title:'Sapia of Siena',
+  text:S=>(S.flags.walkedBlind?`(You walked the rim with your eyes shut — the drop on one side singing its long invitation — and the strangest thing happened to the dark behind your lids: it filled with the Medusa. The walls of Dis. COVER YOUR EYES. But this time no one held their hands over your face; you held the dark yourself, and walked in it willingly, and it held. Somewhere in your ledger, something old about trust finally reconciled.)\n\n`:``)
+    +`She is small and upright, wire-eyed, and she pats the stone beside her in flawless aim of your footsteps.\n\n<em>“Sapia,”</em> she introduces herself. <em>“Of Siena. Wise by name—”</em> the wire glints as her face performs the memory of a wink — <em>“and not by nature. Do you want the worst thing I ever felt, pilgrim? You collect worsts, I can smell the basement on you. Here: my own city’s army, broken at Colle. My NEIGHBORS, dying in a ditch. And I stood at my window and felt — joy. Joy like a struck bell. I prayed to God, ‘now whatever You do to me, I’m square,’ like a gambler up at midnight.”</em>\n\nHer sewn face tilts toward the warmth of you.\n\n<em>“Envy is the only sin with no pleasure IN it, did you notice, down there in the storerooms? Lust has its hour. Greed gets to count. Envy is just — standing at the window, hating the view. The wire isn’t to punish my eyes, friend. It’s to teach them what they’re FOR, by subtraction.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Tell your kin envy ends — I’ll carry it to Siena’s living, however it goes.”',
+      pray:'pr_sapia', go:'t2_angel' },
+    { t:'“What do you miss seeing most?” — and sit while she answers.', pace:-1,
+      burden:{envy:-1}, go:'t2_sapia2' },
+    { t:'Describe the view for her — the sea, the terraces, the light. Be her eyes a while.',
+      burden:{envy:-2}, go:'t2_angel', fx:S=>S.flags.wasEyes=1 },
+  ]},
+t2_sapia2: { region:'t_envy', title:'What the Wire Is For',
+  text:`<em>“Faces,”</em> she says, instantly, the answer worn smooth from long carrying. <em>“Not the beautiful ones. The MIDDLE of faces — the part that moves just before someone laughs. I spent sixty years watching windows and I could not tell you the middle of my own sister’s face.”</em>\n\nThe tears find the gaps in the wire, glaze, dry.\n\n<em>“That’s the tailoring, you see. The stitching comes out — the angel’s wing, at the stair, one thread per pass — and they tell me that when the last thread goes, the first thing you see is the person who held you up all those years, closer than a window ever let anyone be. They say nobody envies ANYTHING for a long while after that. The eyes come back converted.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Your kin, in Siena. I’ll tell them how envy ends.”',
+      pray:'pr_sapia', go:'t2_angel' },
+    { t:'Touch the back of her hand once, so she knows exactly where you were.',
+      burden:{envy:-1}, go:'t2_angel' },
+  ]},
+t2_angel: { region:'t_envy', title:'The Second Wing',
+  text:(S,P)=>`The angel of this stair carries no sword and no scales — only a drawn thread of light wound about one wrist, and the patience of a surgeon at the end of a long list.\n\n${(S.burdens&&S.burdens.envy<=1)?`It considers your brow, and the thread of light unwinds.`:`It considers your brow, and does not reach for the thread. The sideways look still lives in you somewhere, watching other people’s weather.`}`,
+  choices:[
+    { pre:'the second letter', t:'Stand still while the thread passes your brow — the second P unpicked like a stitch.',
+      req:S=>S.burdens&&S.burdens.envy<=1, wipeP:'envy', go:'t3_arrive' },
+    { t:'Return to the row. Lean, and be leaned on, until the weight is true.',
+      req:S=>S.burdens&&S.burdens.envy>1, burden:{envy:-2}, pace:1, go:'t2_angel' },
+    { t:'Climb on, letter and all.', req:S=>S.burdens&&S.burdens.envy>1, go:'t3_arrive' },
+  ]},
+t3_arrive: { region:'t_wrath', title:'The Terrace of Smoke',
+  text:`The third terrace does not let you see it.\n\nSmoke — not fire’s smoke but smoke DISTILLED, the essence of every slammed door and every held grudge, black past midnight-black, and it takes the world away between one step and the next. Your hand vanishes at the wrist. The drop at the terrace-edge is somewhere. Voices move in the murk, praying the Lamb of God in ragged unison, each voice sanding its edges against the others.\n\nThis is where the wrathful walk: inside the very thing anger always was from the inside — blinding, choking, directionless, certain only that somewhere in the dark is someone who deserves finding.\n\nA shoulder jostles yours, hard, out of nowhere. Then a voice, mild as milk: <em>“Your pardon, friend — the smoke. Walk with me? Two blind men make one sighted one, my mother used to say. She was wrong about most things, but wrong CHEERFULLY, which I have come to believe is the whole trick of it.”</em>`,
+  choices:[
+    { t:'Walk with the voice.', go:'t3_marco' },
+    { t:'The jostle lands wrong — every basement instinct coils to shove back—',
+      go:'t3_strike' },
+    { t:'Stand still first. Let the smoke prove it cannot actually hurt you.', pace:-1,
+      burden:{wrath:-1}, go:'t3_marco' },
+  ]},
+t3_strike: { region:'t_wrath', title:'The Old Answer',
+  text:`Your hands are already up — nine circles of reflex, the marsh, the hair in your fist at the ice — and the smoke waits, interested, to see which pilgrim reached the third terrace.\n\nThe shove is loaded. The voice is right THERE. In the dark, no one would even see—\n\n— which is, you realize, with your hands still raised, the exact sentence every soul on this terrace said to themselves once. In the dark, no one would see. Anger always thinks it is invisible. That is why it lives here, in smoke: to learn that it never was.\n\nYou lower your hands. Somewhere in the murk, the mild voice says, approvingly: <em>“There. Cheaper than a candle, that lesson, and most men pay a war for it.”</em>`,
+  choices:[
+    { t:'Exhale the whole basement. Walk with the voice.', burden:{wrath:-2}, go:'t3_marco' },
+    { t:'Walk with him — but keep your hands remembered, just in case.', go:'t3_marco' },
+  ]},
+t3_marco: { region:'t_wrath', title:'Marco Lombardo',
+  text:`You walk elbow to elbow through the black, and the voice introduces itself as Marco, of Lombardy — a courtier once, quick of temper and quicker of tongue, <em>“a sword drawn so often it forgot it had a sheath.”</em>\n\nAnd then, because you cannot see each other and the dark makes philosophers of everyone, you ask him the question the whole descent packed in your chest and never unpacked: if Hell reads the ledger, and the stars incline the heart, and the she-wolf waits in every wood — was any of it ever truly CHOSEN? Yours, theirs, anyone’s?\n\nThe smoke walks with you for ten steps before he answers.\n\n<em>“The heavens set your motions going — I’ll give the stars that much,”</em> Marco says. <em>“They shove. Oh, they shove. But a LIGHT is given you, to know good from ill, and a WILL — and the will, friend, if it holds through the first hard shove and the second, wins the whole war in the end. The stars incline. They do not compel. If the world goes wrong, look for the cause in yourselves; in YOU it lies, and in you let it be sought.”</em>\n\n<em>“I walked nine circles of people the shove explained,”</em> you say, into the dark.\n\n<em>“And climbed a mountain of people it didn’t excuse,”</em> says Marco. <em>“That’s the terrace, pilgrim. That’s the whole smoke. Anger is what the will does when it wants to be a star instead.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Pray for you, when I stand in the sweet air and choose freely. I will. Freely.”',
+      pray:'pr_marco', burden:{wrath:-1}, go:'t3_angel' },
+    { t:'“In me it lies.” Carry the sentence like a stone you chose.', burden:{wrath:-1},
+      pace:-1, go:'t3_angel' },
+    { t:'Argue the basement’s case one more round — the wolf, the ledger, the residue—', go:'t3_marco2' },
+  ]},
+t3_marco2: { region:'t_wrath', title:'One More Round',
+  text:`Marco hears the whole brief out — the she-wolf that blocks every hill, Minos reading ledgers like weather, the residue that follows a soul run to run — and the smoke gives you his silence the way a good court gives silence: fully.\n\n<em>“All true,”</em> he says at last. <em>“And all beside the point. Listen: I KNEW my temper. Knew it the way a man knows his own dog. Every court in Lombardy would have testified the dog was born mean. And every single morning, friend, the dog looked up at me and waited to see what I’d feed it.”</em>\n\nA hand finds your shoulder in the dark, unerring, and squeezes once.\n\n<em>“The stars bred the dog. I fed it. That’s the whole theology, and it fits in a pocket. Now — the light’s ahead, where the smoke thins. Go on. Some of us have a few more years of walking in here, getting the dog to heel.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“I’ll pray for the man who feeds the dog well now. Freely.”',
+      pray:'pr_marco', burden:{wrath:-1}, go:'t3_angel' },
+    { t:'Leave him the last word. It was always going to be his.', go:'t3_angel' },
+  ]},
+t3_angel: { region:'t_wrath', title:'The Third Wing',
+  text:(S,P)=>`The smoke thins at the stair the way an argument thins when someone finally says the true thing — all at once, embarrassed to have lasted so long. The angel of the third terrace stands in the sudden clean air, bright as the first window of a fever’s end.\n\n${(S.burdens&&S.burdens.wrath<=1)?`It reads your brow, and lifts its wing.`:`It reads your brow, and waits. The dog in you is not yet at heel.`}`,
+  choices:[
+    { pre:'the third letter', t:'Let the wing pass — the third P gone like smoke given a window.',
+      req:S=>S.burdens&&S.burdens.wrath<=1, wipeP:'wrath', go:'p_night2' },
+    { t:'Walk the smoke again, jostled and unjostling, until the weight is true.',
+      req:S=>S.burdens&&S.burdens.wrath>1, burden:{wrath:-2}, pace:1, go:'t3_angel' },
+    { t:'Climb toward evening, letter and all.', req:S=>S.burdens&&S.burdens.wrath>1,
+      go:'p_night2' },
+  ]},
+p_night2: { region:'pnight', title:'The Second Night — She Comes Singing',
+  enter:S=>{ S.dayPhase=3; },
+  text:`The sun goes down mid-stair and the law takes your feet again. You camp on the steps between terraces, in air that smells faintly of the smoke below and faintly of something green above, and sleep arrives like a tide.\n\nAnd in the dream, a woman is standing on the stair.\n\nWrong, at first — stammering, squint-eyed, hunched, the color of long illness. But she begins to sing, and the song REPAIRS her: with every phrase the spine unbends, the color warms, the face resolves toward beauty the way dawn resolves a shoreline — until she is radiant, and the stair is warmer, and the song has your name in it, pronounced the way you always wished someone would.\n\n<em>“I am the sweet Siren,”</em> she sings. <em>“I turn ships from their courses. Stay on the stair. The summit is stone and judgment — but I am WARM, and the night is long, and hasn’t it been such a very long walk, ${'{NAME}'}? Haven’t you EARNED—”</em>\n\nAnd her hand opens, and in it: everything. Rest with no angel auditing it. Praise with no terrace tax. The names you carried, singing YOUR name back. All of it one nod away, and the singing swells—`,
+  choices:[
+    { t:'Take her hand. You have earned it. Haven’t you? The song says so.',
+      gleam:'lust', fx:S=>S.sirenTaken=1, go:'p_siren' },
+    { t:'“Show me your other hand.”', go:'p_siren_torn' },
+    { t:'Turn from her, hard, toward the cold ordinary stair.', burden:{lust:-1},
+      go:'p_siren_torn', fx:S=>S.flags.sirenRefused=1 },
+  ]},
+p_siren: { region:'pnight', title:'The Sweet Wrong Song',
+  text:`Her hand is warm. Of course it is warm — it is made of exactly the temperature you were missing.\n\nThe stair softens. The mountain recedes politely, like a host sensing the party has moved rooms. She sings, and the song furnishes the night: cushions of it, wine of it, a fire that asks for no wood and judges no one. The seven letters on your brow stop itching, because itching is for people going somewhere.\n\nIt is everything the song promised.\n\nIt takes a long time — the dream is generous, the dream is in no hurry at all — before you notice what is missing from the endless warm furnished night. Doors. There have stopped being doors. And the song, on its ten-thousandth repetition, has stopped bothering to pronounce your name correctly, because names are for people who might still be called somewhere else.\n\nSomewhere very far above, a wing you will now never stand under folds itself, patient, over a stair that keeps.`,
+  choices:[
+    { t:'This is fine. The song is warm. Stay in it.', end:'pe_siren' },
+    { t:'DOORS. The word arrives like Cato up the shore — claw toward waking—',
+      go:'p_siren_wake' },
+  ]},
+p_siren_wake: { region:'pnight', title:'Torn Open',
+  text:`Waking comes the hard way: something in the dream grips the Siren by the collar of her borrowed radiance — an old figure, stern, lit by four familiar stars — and TEARS the song open down the front.\n\nThe smell is the whole answer. Under the warm furnished forever: bilgewater and old lamp-grease and a sweetness gone wrong, the exact smell of a thing that eats sailors. Her true belly, gray and glistening. The song was upholstery.\n\nYou wake on the cold stair with your heart going like the runners’ terrace, and the dawn coming up clean and unimpressed, and you have never in two worlds been so glad to be somewhere uncomfortable.`,
+  choices:[
+    { t:'Climb, before the warmth of her finishes leaving your hands.', burden:{lust:-1},
+      go:'t4_arrive' },
+  ]},
+p_siren_torn: { region:'pnight', title:'The Belly of the Song',
+  text:S=>(S.flags.sirenRefused
+    ? `You turn — and turning from a Siren mid-song is like turning from gravity, every cell voting the other way — and the stair is cold and dark and exactly, blessedly REAL under your hands.\n\nBehind you the song curdles. You don’t look. (You have learned, at a gate and a wall and a whole frozen lake, the price of the backward glance.)\n\n`
+    : `<em>“My other—?”</em> The song stumbles. One beat. In a Siren, one stumbled beat is a confession signed in triplicate.\n\n`)
+    +`And then the dream does it for you: a stern old figure — four stars at his shoulder where the dream keeps its sky — steps past you and tears her open down the front, and the smell climbs out. Bilge and grease and sweetness-gone-wrong. The true belly of every song that ever promised furnished forever.\n\nShe flees the dream in her first shape — stammering, hunched, the color of long illness — and somehow THAT is the saddest part, and you are still deciding what to do with the sadness when the dawn takes the whole theater away.\n\nYou wake with your back against the stair and the mountain looking down at you with something that is not quite pride and is not quite NOT.`,
+  choices:[
+    { t:'Up. The runners’ terrace is already drumming somewhere above.', go:'t4_arrive' },
+    { t:'Spare one thought for her first shape, and then climb.', pace:-1,
+      go:'t4_arrive', fx:S=>S.flags.pitiedSiren=1 },
+  ]},
+
+t4_arrive: { region:'t_sloth', title:'The Terrace That Runs',
+  enter:S=>{ S.dayPhase=4; },
+  text:`You hear the fourth terrace before you reach it: drumming. Feet. Hundreds of feet.\n\nThey come around the mountain’s shoulder like weather — a river of penitents at a dead sprint, robes streaming, and as they pass, the leaders are SHOUTING, not in pain but in curriculum: Mary went with haste into the hill country! Caesar struck at Marseilles and flew to Spain! — the whole catalogue of holy hurry, gasped out at speed by the souls who, alive, never hurried toward anything that mattered.\n\nThe slothful. Running. Forever running, until running toward becomes the shape of their souls.\n\nAnd your chest catches, because you have seen this exact sentence before, under a rain of fire: the runner who could not stop, craning up at you, checking whether you kept pace with his MEANING. The mountain and the pit use the same punishments, pilgrim — you knew that from the boulder — but here comes the difference, sprinting past you in robes:\n\nThese runners are getting somewhere. And they know it. Under the gasping you can hear it plainly. The drumming feet are keeping time with something, and the something is joy.`,
+  choices:[
+    { t:'Run with them. A full lap of the mountain, shouting the exempla.',
+      burden:{sloth:-2}, pace:1, go:'t4_lap', fx:S=>S.flags.ranLap=1 },
+    { t:'Stand and witness — some lessons are for watching.', burden:{sloth:-1},
+      go:'t4_lap' },
+    { t:'Call out Brunetto’s name as they pass, on the chance sentences echo between worlds.',
+      go:'t4_lap', fx:S=>S.flags.calledBrunetto=1 },
+  ]},
+t4_lap: { region:'t_sloth', title:'The Joy of the Drum',
+  text:S=>(S.flags.ranLap
+    ? `You run. Nine circles and a shoreline of walking, and now the mountain asks for your lungs, and you GIVE them — falling in beside a gasping abbot who grins at you sideways and picks up the pace out of pure hospitality.\n\nA lap of the whole mountain at altitude, shouting borrowed exempla, and somewhere in the second mile the running stops being about the terrace and becomes the plain animal gospel of a body doing a thing completely. When you finally peel off at the stair, legs singing, the abbot calls after you: <em>“THAT’S the cure, friend! Not the speed — the TOWARD!”</em\n\n>`
+    : S.flags.calledBrunetto
+    ? `You shout the name — BRUNETTO — into the river of runners, and for three strides nothing, and then one of the leaders, without breaking pace, shouts back over his shoulder: <em>“THE TEACHER? THE ONE BELOW? RUNNING WELL, IS HE?”</em>\n\n<em>“LIKE HIM WHO WINS,”</em> you call, and the whole front rank ROARS — approval, fellowship, the sound one sentence makes greeting another across the whole architecture of the dead — and they carry the name away around the mountain like a torch handed down a line.\n\nSentences echo between worlds. You have witnessed it now.\n\n`
+    : `You stand at the terrace edge and let the river of them pour past, lap after lap, and watching turns out to be its own instruction: the faces coming around the second time are LIGHTER than the first, and the third lighter still — not less tired; less HAUNTED, as if every mile ran a year of afternoon naps out of them.\n\n`)
+    +`The angel of the stair does not make the runners stop to receive the wing. It stands in the current like a rock in a river, and brushes each brow AT SPEED as they pass, and the wiped ones straighten mid-stride and run on lighter — because that is the fourth terrace’s whole secret, told with a straight face: zeal is just sloth converted, at the same magnitude, in the opposite direction.`,
+  choices:[
+    { pre:'the fourth letter', t:'Run the stair at the angel — brow forward — and take the wing at full stride.',
+      req:S=>S.burdens&&S.burdens.sloth<=1, wipeP:'sloth', go:'t5_arrive' },
+    { t:'More laps. The weight still shows.', req:S=>S.burdens&&S.burdens.sloth>1,
+      burden:{sloth:-2}, pace:1, go:'t4_lap' },
+    { t:'Climb past, letter and all — at, ironically, your own pace.',
+      req:S=>S.burdens&&S.burdens.sloth>1, go:'t5_arrive' },
+  ]},
+t5_arrive: { region:'t_greed', title:'The Terrace of the Bound',
+  text:`The fifth terrace lies face-down.\n\nThat is the whole first impression: a terrace of backs. The penitents lie prone on the bare rock, arms and legs bound, cheeks against stone, weeping into the mountain — the ones who spent their lives bent toward gold now bound to look at DIRT until dirt teaches them what gold was: earth, arranged ambitiously.\n\n<em>“My soul cleaveth unto the dust,”</em> they weep, in a hundred languages, and the terrace hums with it like a hive of grief.\n\nYou walk the narrow path between the bound with your ledger-heavy footsteps, and you have never felt so LOOKED AT by people who cannot look at anything — until, ahead, the mountain interrupts itself:\n\nThe rock SHUDDERS. The whole mountain, root to summit, one long tectonic shiver — and every bound soul on the terrace lifts its face an inch off the stone and ROARS, in one voice, in the one language: <em>GLORIA IN EXCELSIS DEO!</em>\n\nAnd then it is over, and the weeping resumes as if nothing, and somewhere on the terrace one man is standing up.`,
+  choices:[
+    { t:'Go to the standing man.', go:'t5_statius' },
+    { t:'First — ask a bound soul what in Heaven’s name that WAS.', go:'t5_quake' },
+    { t:'Lie down among them a moment, cheek to the stone, and read the dirt.',
+      burden:{greed:-2}, pace:-1, go:'t5_statius' },
+  ]},
+t5_quake: { region:'t_greed', title:'What the Mountain Does',
+  text:`The bound soul you kneel beside laughs into the rock — actually laughs, the sound muffled by stone and binding.\n\n<em>“That,”</em> he says, <em>“is the best thing that happens here, and it happens whenever it happens, and it is worth every year of the dust. The mountain shakes when a soul is FINISHED, friend. When someone, somewhere on some terrace, feels the last weight go — not wiped, not brushed — DONE, free, light enough to rise — the whole mountain feels it and shouts.”</em>\n\nHis bound hands flex against the rock, patient.\n\n<em>“Down where you walked — I can smell the walk on you — the ground never shook for anyone, did it? Nobody ever FINISHED. That’s the whole difference between the establishments, in one shiver. Now go meet the cause. It’s polite to congratulate them; we can’t exactly stand to shake hands.”</em>`,
+  choices:[
+    { t:'Go and meet the finished man.', go:'t5_statius' },
+  ]},
+t5_statius: { region:'t_greed', title:'The Finished Man',
+  text:`He stands among the prone like the first tree after a flood — swaying slightly, blinking at his own hands, a man rediscovering vertical. When he sees you (living, luggage-laden, agog) he laughs with the whole of his chest.\n\n<em>“Five hundred years I lay on this rock,”</em> he says, <em>“and the moment the weight went, the mountain shouted for ME. Statius. Poet, of Rome — the LESSER poet of Rome, I hasten to say; I lit my lamp at a fire I never met. And here is the joke of my five hundred years, pilgrim, and you may have it free:”</em>\n\nHe leans in, delighted, confessional:\n\n<em>“I was never a MISER. I lay on the greed-terrace for the opposite crime — I spent like a burst dam, I threw gold at the world to watch it splash — and the mountain bound me HERE, because prodigal and miser are the same error at different volumes: both of them think the metal is the thing. Every terrace on this mountain cures TWO opposites with one rock. Remember that when you judge a ledger, yours or anyone’s.”</em>\n\nHe looks up the mountain, at the terraces he can finally climb, and his voice drops out of the joke register entirely:\n\n<em>“I feel the summit pulling. Walk with me a while? Finished men make poor company alone — we keep stopping to feel the lightness.”</em>`,
+  choices:[
+    { t:'“Walk with me to the top, poet. I seem to collect Romans.”', go:'t5_angel',
+      fx:S=>S.flags.statius=1 },
+    { t:'“Which fire did you light your lamp at?” — though you already know.', go:'t5_statius2' },
+    { t:'Congratulate him, and climb ahead alone.', go:'t5_angel' },
+  ]},
+t5_statius2: { region:'t_greed', title:'The Lamp and the Fire',
+  text:`<em>“The Aeneid,”</em> Statius says, the way other men say a beloved’s name at a grave. <em>“It was mother and nurse to me in poetry. I would serve a year more on that rock, gladly, to have lived one day when Virgil lived — to have SEEN him once, walked one road beside him, told him—”</em>\n\nHe stops, because you are making a face. You are making, despite nine circles of practice at composure, the most transparent face of your entire pilgrimage.\n\n<em>“...What,”</em> says Statius. <em>“What is that face. Pilgrim. WHAT is that face?”</em>`,
+  choices:[
+    { t:'“Walk with me to the top. That’s all I’ll say. Walk with me.”', go:'t5_angel',
+      fx:S=>{S.flags.statius=1;S.flags.statiusSurprise=1;} },
+    { t:'Tell him now — who has been guiding you since the wolf.', go:'t5_angel',
+      fx:S=>{S.flags.statius=1;S.flags.statiusTold=1;} },
+  ]},
+t5_angel: { region:'t_greed', title:'The Fifth Wing',
+  text:(S,P)=>(S.flags.statiusTold?`(He did not believe you. Then he believed you all at once, which was worse — a five-hundred-years-finished man sitting down hard on the terrace floor among the bound, saying the name twice, privately, like checking a key still fits a lock.)\n\n`:``)
+    +`The angel of the bound stands at the stair with open hands — the only angel on the mountain whose gesture is GIVING, palms out, forever offering the nothing that the greedy and the prodigal both finally learn to want correctly.\n\n${(S.burdens&&S.burdens.greed<=1)?`It reads your brow, and the open hands lift toward it.`:`It reads your brow and keeps its hands at rest. Somewhere in you, something is still counting.`}`,
+  choices:[
+    { pre:'the fifth letter', t:'Bow between the giving hands — the fifth P leaves like a debt forgiven.',
+      req:S=>S.burdens&&S.burdens.greed<=1, wipeP:'greed', go:'t6_arrive' },
+    { t:'Lie down on the rock among the bound, and read the dirt until the counting stops.',
+      req:S=>S.burdens&&S.burdens.greed>1, burden:{greed:-2}, pace:1, go:'t5_angel' },
+    { t:'Climb on, letter and all.', req:S=>S.burdens&&S.burdens.greed>1, go:'t6_arrive' },
+  ]},
+t6_arrive: { region:'t_gluttony', title:'The Terrace of the Tree',
+  enter:S=>{ S.dayPhase=5; },
+  text:S=>`The sixth terrace smells like the best meal of your life, cooking eternally one room away.\n\nThe source: a tree, mid-terrace, hung with fruit that shines like lit lanterns — and shaped WRONG, deliberately wrong, wide at the crown and narrow at the root, a tree built unclimbable by design. A clear stream rains down through its branches from the rock above, and the whole terrace is that smell: fruit and cold water and bread-adjacent sweetness, broadcast at souls who cannot eat.\n\nAnd the souls — the penitents of the gorge and the goblet — are SKELETONS in skin, eye-sockets like dark windows, the letters of their gauntness spelling (a bound soul’s joke, no doubt) OMO in every face. They circle the tree at a reverent distance, breathing the smell, singing with what breath the hunger spares:\n\n<em>“Labia mea, Domine—”</em> Lord, open thou my lips — sung by mouths that once opened for everything, learning at last what lips are FOR.\n\n${S.flags.statius?`Beside you, Statius inhales the impossible smell and laughs softly. <em>“I lay five hundred years one terrace down and never once smelled this. The mountain rations even its torments. Climb light, friend — this one is thankfully not ours.”</em>`:``}`,
+  choices:[
+    { t:'Walk the circle with the hungering, breathing what they breathe.',
+      burden:{gluttony:-2}, go:'t6_singer' },
+    { t:'Stand under the tree and refuse it out loud, once, formally.', burden:{gluttony:-1},
+      go:'t6_singer', fx:S=>S.flags.refusedTree=1 },
+    { t:'One fruit hangs low. One. Lantern-bright. The smell has your name in it—',
+      gleam:'gluttony', req:S=>(S.burdens&&S.burdens.gluttony>=3), go:'t6_grasp' },
+  ]},
+t6_grasp: { region:'t_gluttony', title:'The Reach',
+  text:`Your hand goes up — nine circles, three nights, a whole mountain of discipline, and the arm rises anyway, ancient as appetite —\n\nand the branch rises too.\n\nGently. Un-angrily. The way a parent moves a candle from a reaching child, the tree lifts its low fruit exactly one hand-width beyond your fingers and holds it there, glowing, patient, while the stream rains through the leaves with a sound like mild laughter.\n\nFrom the circling skeletons, no judgment — worse: RECOGNITION. A dozen dark eye-sockets turn, and a voice like a reed flute says, kindly: <em>“First time reaching, friend? We all reached. Reaching is the tuition. Walk it off with us.”</em>`,
+  choices:[
+    { t:'Walk it off with them — lap after lap, until the arm forgets the reach.',
+      burden:{gluttony:-2}, pace:1, go:'t6_singer' },
+    { t:'Laugh at yourself — the sound sends the whole circle into flute-thin hilarity.',
+      burden:{gluttony:-1}, go:'t6_singer' },
+  ]},
+t6_singer: { region:'t_gluttony', title:'The Hollowed Singer',
+  text:`One of the skeletal penitents falls in beside you — a young man, or the architecture of one, with a voice that hunger has whittled to a startling sweetness, as if everything left of him funneled into the singing.\n\n<em>“You’re the breather everyone’s been gossiping about,”</em> he says. <em>“Terraces gossip. We have very little else to chew on — forgive me, the jokes make it bearable, that one especially.”</em>\n\nHe circles you around the tree, and tells it plainly, without self-pity, the way the dead of this mountain all learn to: the suppers that became his whole calendar, the goblet that became his whole clock, the sister who set two plates every evening and ate opposite an emptying chair — and who, he has heard through the mountain’s slow postal system of arriving souls, sets two plates STILL, a decade on, because grief keeps its own pantry.\n\n<em>“I don’t want her praying me up faster,”</em> he says — the first soul on the mountain to refuse the standard request. <em>“The hunger is fair; I ate her decade first. I want her to EAT, pilgrim. Warm food, at a full table, guiltless. If you walk the sweet world again—”</em> the reed voice cracks, sweetens, holds — <em>“tell her one plate is enough now. Tell her the empty chair is climbing a mountain, and the mountain feeds him better than the table ever did.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“One plate. She’ll hear it kindly — I’ve gotten good at carrying grief the right way up.”',
+      pray:'pr_hollow', go:'t6_angel' },
+    { t:'“What does the mountain feed you?” — walk a lap and hear the answer.', pace:-1,
+      burden:{gluttony:-1}, go:'t6_angel' },
+    { t:'Sing the next round with him — the OMO faces turning, the stream keeping time.',
+      burden:{gluttony:-1}, go:'t6_angel', fx:S=>S.flags.sangTree=1 },
+  ]},
+t6_angel: { region:'t_gluttony', title:'The Sixth Wing',
+  text:(S,P)=>`At the stair past the tree, the angel of temperance stands in a drift of the impossible smell, unbothered by it — the only creature on the terrace to whom the fruit is simply fruit.\n\n${(S.burdens&&S.burdens.gluttony<=1)?`It reads your brow, and the air around it goes suddenly, cleanly odorless — appetite’s whole theater dismissed — and the wing lifts.`:`It reads your brow, and the smell around you sharpens, knowingly. Something in you is still at the table.`}`,
+  choices:[
+    { pre:'the sixth letter', t:'Bow through the clean air — the sixth P gone like hunger after grace.',
+      req:S=>S.burdens&&S.burdens.gluttony<=1, wipeP:'gluttony', go:'t7_arrive' },
+    { t:'More laps of the tree, breathing the lesson.', req:S=>S.burdens&&S.burdens.gluttony>1,
+      burden:{gluttony:-2}, pace:1, go:'t6_angel' },
+    { t:'Climb on, letter and all.', req:S=>S.burdens&&S.burdens.gluttony>1, go:'t7_arrive' },
+  ]},
+t7_arrive: { region:'t_lust', title:'The Terrace of Fire',
+  text:S=>`You hear the seventh terrace breathing before you round the shoulder: a long exhale that never ends. Then the heat arrives, and then the sight of it—\n\nFire. A wall of it, pouring OUT of the inner cliff and along the whole terrace, leaving only a hand-span of safe path at the outer edge, between the burning and the fall. And IN the fire — walking in it, upright, unconsumed and unexcused — the penitents of the seventh terrace, the lovers, the ones who let the heart drive with the lamps off. You have seen them before, riding a black wind at the bottom of a storm. Here the storm is lit.\n\nThey move through the flame in two streams, meeting and passing, and where the streams meet each soul greets one soul of the other — one brief embrace, one kiss quick as a bird drinking, and on — affection itself, rationed to its cleanest sentence and returned to the fire.\n\n${S.flags.statius?`<em>“The last terrace,”</em> Statius murmurs. <em>“And the only one the mountain makes EVERYONE walk through at the end, saint and sinner alike. You’ll see. The stair to the summit is on the other side of that.”</em>`:`And with a slow cold arithmetic you work it out yourself: the stair to the summit is on the OTHER SIDE of that.`}`,
+  choices:[
+    { t:'Walk the safe hand-span first, and speak with the burning.', go:'t7_arnaut' },
+    { t:'Study the fire. It burns gold at the edges, like the gate’s inscription.',
+      pace:-1, go:'t7_arnaut' },
+    { t:'Look at the fall instead — the long blue drop to the sea. Also an exit.',
+      go:'t7_arnaut', fx:S=>S.flags.eyedFall=1 },
+  ]},
+t7_arnaut: { region:'t_lust', title:'The Singer in the Flame',
+  text:`From inside the fire, pacing you along the hand-span path, a voice rises — singing, of course; this whole mountain sings — but singing in a tongue you half-know, olive-sweet, built for exactly this subject:\n\n<em>“Ieu sui Arnaut, que plor e vau cantan…”</em>\n\nThe flame at your shoulder gathers into the shape of a man walking — a troubadour, by the way he carries the song like a instrument he was born holding — and he translates himself, courteous through the fire:\n${VQ('v_wind').replace(verses.v_wind.lines.join('<br>'),'“I am Arnaut, who weep and singing go;<br>Contrite I see the folly of the past,<br>And joyous see the hoped-for day before me.”')}<em>“The greatest craftsman of the mother tongue,”</em> a voice says behind you — Statius, or your own read of history — but Arnaut waves it off in a swirl of sparks.\n\n<em>“Craft,”</em> he says, <em>“is what I burned FOR, friend. I made longing so beautiful that beauty and longing swapped clothes, and a generation followed my songs out past their own lamps. Now I sing in the tailor’s shop of the mountain, where the clothes come off. Weeping and singing — both at once, the whole walk. It is the only honest register this subject ever had.”</em>`,
+  choices:[
+    { pre:'take the prayer', t:'“Sovegna vos — I’ll be mindful, in due season, of your pain. Said in your own tongue, above.”',
+      pray:'pr_arnaut', go:'t7_angel' },
+    { t:'“Does the fire burn less, with the singing?”', pace:-1, go:'t7_arnaut2' },
+    { t:'Walk the hand-span in silence beside his burning, all the way to the stair.',
+      burden:{lust:-1}, go:'t7_angel' },
+  ]},
+t7_arnaut2: { region:'t_lust', title:'What the Fire Is For',
+  text:`<em>“Less?”</em> Arnaut laughs, and the fire laughs with him, sparks spiraling. <em>“Friend, the singing burns MORE. That’s the terrace. The fire doesn’t hurt the body — look, no blister on any soul in here — it burns the LONGING, and the longing is fed by everything sweet, so everything sweet feeds the burn. We sing anyway. We embrace at the meeting of the streams anyway. Quick, clean, and back to the fire.”</em>\n\nHe paces you, flame-footed, and his voice drops into the confidence of craftsmen:\n\n<em>“Because here is the seventh terrace’s secret, and it took me two hundred years of singing to hear it in my own verses: the fire and the love were never two things. Below the mountain they tell you to put the fire OUT. Up here they teach you to hold it — clean, and pointed, and yours. That is why everyone walks this terrace at the end, pilgrim. Even the saints. ESPECIALLY the saints.”</em>\n\nAhead, at the fire’s end, the path stops pretending: the flame closes over the full width of the terrace, wall to fall. The stair to the summit glimmers beyond it like a rumor. And standing before it, waiting for you with his hands folded in his sleeves, in the last of the daylight, is the poet of Rome.`,
+  choices:[
+    { pre:'take the prayer', t:'“Sovegna vos, craftsman. In due season. Now — my fire’s ahead.”',
+      pray:'pr_arnaut', go:'t7_angel' },
+    { t:'Walk to the poet at the fire.', go:'t7_angel' },
+  ]},
+t7_angel: { region:'t_lust', title:'The Wall of Fire',
+  text:(S,P)=>`The angel of the seventh terrace stands INSIDE the flame — of course it does — singing from the middle of the burning like a bird in a lit hedge: <em>“Blessed are the pure in heart.”</em> And it does not brush brows here. It gestures, unmistakably: THROUGH.\n\n${(S.burdens&&S.burdens.lust<=1)?``:`(The last letter still itches on your brow. The fire, you understand, will take it whether the wing does or not — this terrace wipes by immersion.)\n\n`}The poet looks at the fire, and then at you, and thirteen centuries of Roman composure do their work one more time.\n\n<em>“Here is the wall,”</em> Virgil says, <em>“that I told you of at the gate of the wood, though I did not say it would be made of this. Listen to me now, {NAME}: there may be torment in it. There is no DEATH in it. I have walked you past Gorgons and over Geryon on the strength of my word — has it broken once?”</em>\n\nHe steps close, and his voice does the thing it has done only twice on this whole road — at his home in Limbo, and at the burrow at the bottom of the world:\n\n<em>“Between Beatrice and thee, there is this wall. Think — she is on the OTHER side. I will walk it with you. It is nearly the last thing I may do.”</em>`,
+  choices:[
+    { t:'Walk into the fire with him.', wipeP:'lust', go:'p_fire' },
+    { t:'“Say her name again.” — and then walk into the fire.', wipeP:'lust',
+      pace:-1, go:'p_fire', fx:S=>S.flags.saidHerName=1 },
+    { t:'Refuse. The drop, the terrace, the singing — anything but the burning.',
+      end:'pe_fire_refused' },
+  ]},
+p_fire: { region:'t_lust', title:'Through',
+  text:S=>`It is worse than he said and exactly what he promised: torment, and no death. The fire takes you the way grief takes a body — total, undeniable, and somehow SORTING, burning nothing that is yours and everything that only claimed to be. Somewhere in the middle, where the light is a solid gold roar, you lose the difference between burning and being made.\n\n${S.flags.saidHerName?`And through all of it, ahead of you, the poet's voice, steady as a rope: her name. Just her name, over and over — <em>“Beatrice. Beatrice. Beatrice”</em> — the one word he has ever used as a tool rather than an ornament, and you follow it hand over hand through the roar.\n\n`:`And through all of it, ahead of you, the poet's voice, steady as a rope, calling the one word that pulls: <em>“Beatrice.”</em>\n\n`}Then grass. Cool air. Evening. You are through — smoking faintly, unblistered, seventh letter gone from your brow without any wing's help — standing on the first step of a stair cut upward through sweet-smelling rock, and the sun, punctual as law, is going down.`,
+  choices:[
+    { t:'Climb until the light fails, then sleep on the stair.', go:'p_night3' },
+  ]},
+p_night3: { region:'pnight', title:'The Third Night — the Last Dream',
+  enter:S=>{ S.dayPhase=6; },
+  text:S=>`The law takes your feet on the seventh step, and you camp on the stair — you, the poet${S.flags.statius?', and the finished man':''} — each on a step, like goods on a shelf, with the stars enormous and corrected overhead and the fire below purring like a hearth now that it has had its meal of you.\n\nAnd you dream — gently, this time; the mountain has stopped testing and started PROMISING — of a young woman in a meadow, gathering flowers, singing, her hands never still: <em>“I am Leah. I go gathering; my sister Rachel sits at the glass all day and looks. Seeing and doing — we are two hands of one body, pilgrim. The garden ahead needs both.”</em>\n\nShe weaves the flowers into a garland as the dream pales, and just before dawn takes the meadow she looks at you directly — the way dream-figures almost never do — and says, in a voice suddenly not hers but older, warmer, star-adjacent:\n\n<em>“He kept every promise on the way to keeping mine. Be kind, tomorrow, about what he cannot do.”</em>`,
+  choices:[
+    { t:'Wake, with the warning folded in your chest.', go:'p_crown' },
+  ]},
+p_crown: { region:'pgate', title:'Crowned and Mitred',
+  text:`Dawn on the last stair. The summit is close enough to smell — green, and water, and some flower nobody fell from grace fast enough to name — and the poet stops climbing on a wide step in the first light, and you know. You have known since the burrow at the bottom of the world. This is the far edge of his map.\n\n<em>“The temporal fire and the eternal,”</em> Virgil says, <em>“thou hast seen, my son — and art come to a place where I, of myself, discern no further. I have brought thee here with understanding and with art. Thine own pleasure now must be thy guide: the road is past the steep ways and the narrow.”</em>\n\nHe looks at you — the charge he carried past Gorgons and demons and the frozen Emperor, the living soul who once promised a road walked down to Limbo — and the Roman composure does not break. It OPENS.\n\n<em>“No more expect my word, nor my sign. Free, upright and whole is thy will, and error were it not to do its bidding.”</em>\n${VQ('v_crown')}He sets his hands on your head as he says it — the absurd, parental, coronating gesture — and for one moment the whole mountain holds its breath with you.\n\n<em>“Lord of thyself,”</em> he says quietly. <em>“Go and see her. I will watch you walk in. It is a very good view, from here.”</em>`,
+  choices:[
+    { t:'Embrace him. Rules of every realm be damned — again.', learnVerse:'v_crown',
+      go:'eden_matilda', fx:S=>S.flags.huggedCrown=1 },
+    { t:'“You’ll be right here?” — knowing. Asking anyway.', learnVerse:'v_crown',
+      go:'eden_matilda', fx:S=>S.flags.askedStay=1 },
+    { t:'Take the crowning in silence, brow bare of every letter, and walk in.',
+      learnVerse:'v_crown', go:'eden_matilda' },
   ]},
 
 /* ---------------- RITE INTERLUDE (absolve / punish, engine-injected) --- */
@@ -1183,6 +1696,14 @@ e_stars: { title:'To See the Stars Again', kind:'exit', art:'stars',
   text:`You step out of the burrow at the bottom of the world, and there they are — the stars, in their ancient stations, entirely unaware of being the finish line of anything.\n\nYou stand a long time with your head back. Nine circles of the worst the universe files away, and the antidote turns out to be: night sky, free of charge, above every unlocked door on Earth.\n\nYou will keep your promises. At dinners. In quiet rooms. Once a year at least, out loud — the names.\n\nThence you came forth, says the poem, to rebehold the stars. It does not say the stars beheld you back. But tonight, walking home down the mountain with your pockets full of names, you would swear to it.` },
 e_falsestars: { title:'Painted Stars', kind:'exit', art:'stars',
   text:`You step out of the burrow, and there they are — the stars.\n\nThey are very good. Whoever did them studied the originals closely: the constellations are all present, correctly spaced, glittering with commendable diligence on the underside of a ceiling of stone.\n\nYou noticed the brushwork on the third night. You have decided not to notice it again. The names in your pockets have gone quiet — smoke settles, in here, where no wind comes — and the exit you remember exiting is behind you somewhere, probably, painted on.\n\nThe star you carried could have told you. But you spent it, candle by candle, all the way down — and the dark, which keeps exact books, sold you back exactly the light you paid for: a picture of it.` },
+pe_belacqua: { title:'In the Shadow of the Rock', kind:'death', art:'purgatorio',
+  text:`The shade is perfect. That is the truth nobody can argue with, and you stop arguing with it.\n\nBelacqua does not gloat. Gloating is effort. He shifts over exactly enough boulder-shadow for two, and the sea below performs its slow blue forever, and the terraces above go on singing to the people who are into that sort of thing.\n\nHere is what the mountain does about it: nothing. No wasps, no rain, no wheel. The mountain is not Hell; it does not punish rest. It simply keeps the gate exactly where the gate is, and lets the shade be shade, and waits — thirty years for every year, renewable — with the whole patience of geology.\n\nSome afternoons a new pilgrim comes up the slope radiating climb, and you and Belacqua watch them pass with the connoisseurship of retired referees. He was right, you know. It IS the tailoring that breaks you.\n\nThe mountain is not going anywhere. You checked.` },
+pe_siren: { title:'The Sweet Wrong Song', kind:'death', art:'pnight',
+  text:`The song is warm, and you stay in it, and the stair keeps you the way amber keeps.\n\nIt is important to be fair: she was not lying about the warmth. The furnished forever is genuinely furnished — rest with no auditor, praise with no tax, your name (approximately) sung on the quarter hour. The dream economy runs on your staying and pays its bills in temperature.\n\nOnly sometimes — at the hour when the real dawn happens somewhere above the upholstery — the song thins for a moment, and through it you hear feet. Hundreds of feet, drumming the fourth terrace, running TOWARD. And something in you that no longer has a name of its own turns over, like a sleeper hearing weather, before the song swells kindly and tucks the sound away.\n\nShips are turned from their courses by exactly this. You always knew it happened to ships. It is different, being the ship.` },
+pe_fire_refused: { title:'Between the Flame and Her', kind:'death', art:'t_lust',
+  text:`You refuse the fire, and the mountain — being the mountain — does not push.\n\nVirgil argues. Statius waits. The angel sings from inside the burning, patient as noon. And you stand on the hand-span path with the drop on one side and the wall of gold roar on the other, and you cannot, and the cannot is total, and eventually the arguing stops.\n\nThe seventh terrace is not a bad eternity, as eternities go. Arnaut teaches you the weeping-and-singing register. The lovers passing in the flame nod to you at the meeting of the streams — the pilgrim of the path, the one who walks BESIDE. You learn every song. You learn the fire's colors by heart, gold at the edges, like a gate's inscription you read aloud once, a world ago.\n\nShe waits on the other side. That is the sentence, self-imposed, self-renewed. Not the burning — the wall. Every soul in the fire crosses it eventually and rises. You hold the one ticket the mountain cannot stamp for you.\n\nSome nights, through the flame, you would swear you can smell the forest.` },
+pe_paradiso: { title:'Pure and Disposed', kind:'true', art:'lethe',
+  text:`She looks at you a long time, veil lifted, and the scale does not tremble because there is nothing left in either pan: the letters wiped, the weights walked off, the Siren refused, the pace held, the prayers riding your breath like a flock about a mast.\n\n"You did the mountain justice," Beatrice says — the highest sentence in her whole vocabulary — "and the basement too, which is rarer. You carried names UP and prayers ACROSS and set every grievance down in the running water. Do you feel it? The lightness with a direction in it?"\n\nYou feel it. It feels like the opposite of the funnel: not falling, INVITED.\n\nAbove the summit the sky opens the way the whirlwind never could — sphere over sphere over sphere of ordered fire, the corrected constellations wheeling into welcome, and somewhere up the shining of it, faint and certain as a struck bell, the Love that moves all of it is holding a door.\n\nThe poem you are standing in has one line left, and it is yours now, wholly earned:\n\nPure and disposed to mount unto the stars.\n\n(Paradise waits. The mountain, behind you, shakes once — head to root — and shouts.)` },
 e_beatrice_stone: { title:'The Ice in You', kind:'true', art:'beatrice',
   text:`She weighs you, and the scale comes back reading STONE.\n\n"You walked through the house of weeping," she says — not unkindly; diagnosis is its own kindness — "and learned its architecture, and forgot to leave. Nine circles passed through you and nothing spilled. Pilgrim: the ice at the bottom is not the punishment. It is the CONDITION. You have carried a sample out."\n\nShe sets you on the mountain’s first terrace anyway — the mountain refuses no one who arrives — but you climb it as you crossed the pit: correctly, efficiently, dry-eyed among the singing penitents.\n\nIt is a long mountain. There is time. That is what the mountain is FOR, she would tell you, if you ever once asked.` },
 e_beatrice_flood: { title:'Drowned in Feeling', kind:'true', art:'beatrice',
@@ -1191,6 +1712,6 @@ e_beatrice_clear: { title:'The Love That Moves the Stars', kind:'true', art:'bea
   text:`She weighs you a long time. The dawn holds its breath. Nine circles, three names, one guide witnessed home — the whole descent stands in the scale.\n\n"You wept," she says at last, "and walked on. Both. In the correct order, at every station of the dark. Do you know how rare that is, pilgrim? The pit is FULL of the ones who could only do one."\n\nShe turns, and the mountain makes way, terrace upon terrace of singing rising into light that improves as it climbs — and at the top of everything, briefly, you see it whole: the turning, the engine, the thing the whole tour was arranged to show you—\n\nThe Love which moves the sun and the other stars.\n\nYou will spend the rest of your life failing to describe it at dinners, keeping your promises, saying the names. Beginning with a poet’s. It is, as the lady says, not nothing. It is not even close to nothing.\n\nIt is the whole of the arithmetic, and it balances.` },
 };
 
-return { regions, verses, souls, nodes, endings, VQ,
-  helpers:{ domSin, domRes, SIN_NODE, SIN_WORD } };
+return { regions, verses, souls, nodes, endings, VQ, prayers,
+  helpers:{ domSin, domRes, SIN_NODE, SIN_WORD, burdenTotal, psWiped } };
 })();

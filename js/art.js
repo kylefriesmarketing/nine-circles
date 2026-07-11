@@ -288,6 +288,122 @@ beatrice(r){ return G('bt',[[0,'#2a3a5c'],[.5,'#54628a'],[1,'#a88a68']])+rect(0,
     return `<circle cx="${x}" cy="${y}" r="1.5" fill="#fff" opacity=".7"><animate attributeName="opacity" values=".7;.15;.7" dur="${2+r()*4}s" repeatCount="indefinite"/></circle>`;}).join('')
   +rect(0,430,W,70,'#3a3450',.9)
   +figures(300,462,1.05,'#221c30',true);},
+/* ================= ACT II painters — the Mountain ================= */
+pgate(r){ return G('pg2',[[0,'#2a3a54'],[.6,'#54628a'],[1,'#8a7a88']])+rect(0,0,W,H,'url(#pg2)')
+  +stars(r,20,150,'#dfe8f2')
+  +path(`M330,500 L330,240 Q450,150 570,240 L570,500 Z`,'#e8e2d8',.92)
+  +path(`M380,500 L380,270 Q450,210 520,270 L520,500 Z`,'#12141c')
+  +rect(300,455,300,15,'#f4f0e8')+rect(315,425,270,15,'#1a1616')+rect(330,395,240,15,'#7e2020')
+  +`<g><circle cx="450" cy="330" r="26" fill="#f4ecd4" opacity=".95"/>
+    <path d="M450,304 q-20,26 0,52 q20,-26 0,-52" fill="#fff" opacity=".9"/>
+    <path d="M424,330 h52" stroke="#c9a35c" stroke-width="2"/>
+    <animateTransform attributeName="transform" type="translate" values="0,0;0,-6;0,0" dur="4s" repeatCount="indefinite"/></g>`
+  +fog(360,140,'#3a4258',.4,26)+figures(360,478,1.05,'#1a1c28');},
+
+t_pride(r){ return G('tp',[[0,'#c8c2b4'],[.55,'#a8a294'],[1,'#7a7468']])+rect(0,0,W,H,'url(#tp)')
+  +Array.from({length:5},(_,i)=>{const x=60+i*180;
+    return `<rect x="${x}" y="120" width="120" height="200" fill="#b8b2a2" stroke="#8a8478"/>`
+      +`<path d="M${x+18},${170+r()*60} q30,-26 60,0 q-30,${14+r()*10} -60,0 z" fill="#948e80"/>`;}).join('')
+  +Array.from({length:7},(_,i)=>{const x=90+i*115, h=26+r()*14;
+    return `<path d="M${x},420 q-14,-${h*.5} 0,-${h} q6,${h*.3} 12,0 q14,${h*.5} 0,${h} q-6,-4 -12,0 z" fill="#5a5448"/>`
+      +`<ellipse cx="${x+6}" cy="${400-h}" rx="${16+r()*8}" ry="${9+r()*4}" fill="#6a6458"/>`;}).join('')
+  +rect(0,430,W,70,'#8a8478')
+  +fog(330,170,'#b8b2a4',.35,30)+figures(430,470,1,'#3a362e');},
+
+t_envy(r){ return G('te',[[0,'#4a5462'],[.6,'#3a4450'],[1,'#2a3038']])+rect(0,0,W,H,'url(#te)')
+  +rect(0,400,W,100,'#333a44')
+  +Array.from({length:12},(_,i)=>{const x=55+i*72;
+    return `<path d="M${x},430 q-3,-42 10,-56 q10,-8 18,2 q8,12 4,54 z" fill="#4e5866"/>`
+      +circ(x+13,362,9,'#5a6472')
+      +`<path d="M${x+7},360 h12 M${x+7},364 h12" stroke="#2a3038" stroke-width="1.4"/>`;}).join('')
+  +`<circle cx="720" cy="110" r="42" fill="#8a94a2" opacity=".25"/>`
+  +fog(300,200,'#3a4450',.5,24)+figures(250,472,1,'#181c22');},
+
+t_wrath(r){ let smoke='';
+  for(let i=0;i<9;i++){ const x=r()*W, y=120+r()*300, rad=70+r()*90;
+    smoke+=`<circle cx="${x}" cy="${y}" r="${rad}" fill="#0c0a0c" opacity="${.5+r()*.35}">`
+      +`<animate attributeName="cx" values="${x};${x+(r()-.5)*90};${x}" dur="${9+r()*8}s" repeatCount="indefinite"/></circle>`;}
+  return G('tw',[[0,'#1a161c'],[1,'#0a080c']])+rect(0,0,W,H,'url(#tw)')+smoke
+  +Array.from({length:5},()=>circ(r()*W,200+r()*200,2,'#c9a35c',.35)).join('')
+  +fog(0,H,'#141018',.35,14,80)+figures(420,478,1.02,'#060407');},
+
+t_sloth(r){ let runners='';
+  for(let i=0;i<11;i++){ const x=r()*W, y=395+r()*40, s2=.5+r()*.4;
+    runners+=`<g transform="translate(${x},${y}) scale(${s2})" opacity="${.6+r()*.4}">
+      <path d="M0,0 q4,-16 12,-20 q8,-3 10,4 q2,8 -6,10 q10,2 12,14 l-6,2 q-4,-9 -12,-8 q-8,2 -10,-2 z" fill="#1c1826"/>
+      <circle cx="16" cy="-24" r="5" fill="#1c1826"/></g>`;}
+  return G('ts',[[0,'#141c34'],[.5,'#1c2440'],[1,'#242038']])+rect(0,0,W,H,'url(#ts)')
+  +stars(r,40,240,'#aeb8d2')
+  +`<circle cx="200" cy="110" r="34" fill="#dfe8f2" opacity=".9"/><circle cx="188" cy="102" r="30" fill="#141c34"/>`
+  +rect(0,430,W,70,'#1a1628')+runners
+  +fog(340,160,'#141628',.4,20,60)+figures(700,472,1,'#0a0812');},
+
+t_greed(r){ return G('tg',[[0,'#5a4a3e'],[.6,'#4a3c32'],[1,'#332a22']])+rect(0,0,W,H,'url(#tg)')
+  +rect(0,380,W,120,'#403428')
+  +Array.from({length:13},(_,i)=>{const x=40+i*66+r()*16;
+    return `<path d="M${x},408 q10,-9 22,-6 q14,3 16,10 q-18,5 -38,-4 z" fill="#2a221a"/>`;}).join('')
+  +`<circle cx="450" cy="140" r="52" fill="#8a7a5a" opacity=".22"/>`
+  +fog(330,170,'#443628',.45,28)+figures(300,468,1,'#1a140e');},
+
+t_gluttony(r){ return G('t6g',[[0,'#3a4436'],[.55,'#2e3a2c'],[1,'#222c20']])+rect(0,0,W,H,'url(#t6g)')
+  +rect(0,420,W,80,'#2a3426')
+  +`<path d="M450,420 q-30,-90 -12,-160 q-40,26 -70,10 q20,40 -8,58 q36,4 34,40 q26,-16 56,52 z" fill="#1a2418"/>
+   <path d="M438,262 q60,-40 120,-6 q-36,10 -44,34 q-24,-20 -76,-28 z" fill="#243020"/>`
+  +Array.from({length:9},()=>circ(380+r()*160,230+r()*120,5,'#d4b04a',.9)).join('')
+  +Array.from({length:14},(_,i)=>`<line x1="${430+r()*60}" y1="${150+r()*60}" x2="${425+r()*60}" y2="${240+r()*80}" stroke="#8aa4b8" stroke-width="1" opacity=".5"/>`).join('')
+  +Array.from({length:8},(_,i)=>{const x=70+i*100;
+    return `<path d="M${x},468 q-2,-34 6,-44 q6,-6 10,2 q4,10 2,42 z" fill="#1e281c"/>`;}).join('')
+  +fog(340,160,'#2a3626',.4,26)+figures(200,470,1,'#101808');},
+
+t_lust(r){ let fire='';
+  for(let i=0;i<16;i++){ const x=i*60+r()*30, h=120+r()*160;
+    fire+=`<path d="M${x},430 q-${16+r()*14},-${h*.5} 0,-${h} q${16+r()*14},${h*.5} 0,${h} z" fill="${['#d96b2b','#c4552a','#e8923a'][i%3]}" opacity="${.5+r()*.4}">
+      <animate attributeName="opacity" values="${.5+r()*.3};${.85};${.5+r()*.3}" dur="${1.2+r()*1.6}s" repeatCount="indefinite"/></path>`;}
+  return G('t7l',[[0,'#2a1410'],[.5,'#3a1c10'],[1,'#1a0c08']])+rect(0,0,W,H,'url(#t7l)')
+  +fire+rect(0,430,W,70,'#241209')
+  +Array.from({length:4},(_,i)=>{const x=120+i*200;
+    return `<path d="M${x},430 c-2,-28 0,-46 6,-56 c3,-7 11,-8 14,-1 c5,9 3,20 2,30 c-2,10 -2,18 -1,27 z" fill="#12080a" opacity=".85"/>`;}).join('')
+  +fog(300,200,'#2a120c',.35,18,70)+figures(180,472,1,'#0c0506');},
+
+pnight(r){ return G('pn',[[0,'#0a1020'],[.6,'#101a30'],[1,'#1a1c30']])+rect(0,0,W,H,'url(#pn)')
+  +stars(r,90,340,'#dfe8f2')
+  +`<circle cx="690" cy="120" r="38" fill="#e8eef6" opacity=".92"/><circle cx="676" cy="110" r="33" fill="#0c1424"/>`
+  +path(`M0,500 L0,420 L140,360 L300,430 L460,340 L620,420 L780,350 L900,410 L900,500 Z`,'#141226')
+  +path(`M330,420 L450,300 L570,420 Z`,'#1a1830',.9)
+  +figures(430,438,.9,'#060810')
+  +fog(360,140,'#0e1424',.4,32);},
+
+eden(r){ return G('ed',[[0,'#7aa46a'],[.5,'#5a8a56'],[1,'#3a6440']])+rect(0,0,W,H,'url(#ed)')
+  +RG('edsun',[[0,'#f8f0c8',.85],[1,'#f8f0c8',0]])+circ(650,110,150,'url(#edsun)')
+  +Array.from({length:9},(_,i)=>{const x=i*110+r()*40,h=200+r()*180;
+    return `<path d="M${x},${H} L${x},${H-h*.55}" stroke="#2a4430" stroke-width="${10+r()*8}"/>`
+      +`<ellipse cx="${x}" cy="${H-h*.62}" rx="${50+r()*30}" ry="${34+r()*20}" fill="#3e7048" opacity=".9"/>`
+      +`<ellipse cx="${x+20}" cy="${H-h*.75}" rx="${36+r()*20}" ry="${24+r()*12}" fill="#4e8858" opacity=".85"/>`;}).join('')
+  +Array.from({length:26},()=>circ(r()*W,380+r()*110,2.2,['#e8d4e8','#f0e8b8','#d8ecf0'][Math.floor(r()*3)],.9)).join('')
+  +`<path d="M0,470 q225,-14 450,0 t450,0 L900,500 L0,500 Z" fill="#4a90b8" opacity=".7"/>`
+  +fog(300,160,'#6a9a66',.25,34)+figures(300,462,1,'#1c3020',true);},
+
+pageant(r){ return G('pgt',[[0,'#e8d8b0'],[.5,'#d4b888'],[1,'#8a9a78']])+rect(0,0,W,H,'url(#pgt)')
+  +Array.from({length:7},(_,i)=>{const x=170+i*95;
+    return `<line x1="${x}" y1="90" x2="${x}" y2="330" stroke="${['#c44','#d80','#dd4','#4a4','#48c','#84c','#c4c'][i]}" stroke-width="14" opacity=".3"/>`
+      +`<circle cx="${x}" cy="86" r="7" fill="#f8f0d0"/>`;}).join('')
+  +`<g><path d="M390,392 q60,-56 130,0 l-16,40 q-50,-24 -98,0 z" fill="#f4ecd4"/>
+    <path d="M420,362 q16,-40 52,-44 q40,-4 48,30 q-30,-10 -52,6 q-20,-16 -48,8 z" fill="#e8c060"/>
+    <circle cx="470" cy="322" r="14" fill="#f8f4e8"/>
+    <animateTransform attributeName="transform" type="translate" values="0,0;0,-5;0,0" dur="4.5s" repeatCount="indefinite"/></g>`
+  +Array.from({length:20},(_,i)=>{const x=120+i*34;
+    return `<circle cx="${x}" cy="${430+((i%2)*10)}" r="8" fill="#f0e8d4" opacity=".9"/>`;}).join('')
+  +Array.from({length:30},()=>circ(r()*W,r()*300,2,'#f8e8c8',.7)).join('')
+  +fog(330,170,'#d8c8a0',.3,30)+figures(230,478,1,'#5a4a38',true);},
+
+lethe(r){ return G('lt',[[0,'#b8d4c8'],[.5,'#88b4a8'],[1,'#4a8478']])+rect(0,0,W,H,'url(#lt)')
+  +RG('ltsun',[[0,'#fff',.9],[1,'#fff',0]])+circ(450,120,130,'url(#ltsun)')
+  +`<path d="M0,340 q225,-30 450,0 t450,0 L900,500 L0,500 Z" fill="#5aa4c4" opacity=".85"/>`
+  +Array.from({length:8},(_,i)=>`<path d="M0,${360+i*16} q225,${8+r()*6} 450,0 t450,0" stroke="#8ac4dc" fill="none" opacity=".5"/>`).join('')
+  +Array.from({length:7},(_,i)=>{const x=60+i*130;
+    return `<path d="M${x},346 q-3,-30 6,-40 q7,-7 11,1 q4,10 1,39 z" fill="#3a6450" opacity=".8"/>`;}).join('')
+  +Array.from({length:16},()=>circ(r()*W,300+r()*60,2,'#f0e8c8',.8)).join('')
+  +fog(280,140,'#a8ccc0',.3,30)+figures(560,332,.9,'#24443c',true);},
 };
 
 /* aliases for regions sharing painters */

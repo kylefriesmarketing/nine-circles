@@ -35,13 +35,15 @@ function toast(msg){
 function newRun(name){
   // her light remembers you: the true ending leaves one candle permanently lit
   const graced = !!(P.endings && P.endings['e_beatrice_clear']);
-  return { name:name||P.playerName||'Pilgrim', node:'n_wake',
+  return { name:name||P.playerName||'Pilgrim', node:'n_wake', act:'inferno',
     sins:{pride:0,envy:0,wrath:0,sloth:0,greed:0,gluttony:0,lust:0},
     heart:0, virgil:3, star:graced?5:4, names:[], verses:[], flags:{}, judged:{},
-    absolved:0, punished:0, memory:JSON.parse(JSON.stringify(P.verdicts||{})) };
+    absolved:0, punished:0, pace:0, dayPhase:0, prayers:[], sirenTaken:0,
+    memory:JSON.parse(JSON.stringify(P.verdicts||{})) };
 }
 let S=null;
 let lastDepth=null;
+let curRegion=null;
 function saveRun(){ if(S) localStorage.setItem(K_RUN, JSON.stringify(S)); }
 function clearRun(){ localStorage.removeItem(K_RUN); }
 function loadRun(){ try{ return JSON.parse(localStorage.getItem(K_RUN)); }catch(e){ return null; } }
@@ -109,6 +111,7 @@ function titleScreen(){
         ${lit?`style="background-image:url('${IMG_ROOT}/souls/${id}.jpg')"`:''}></div>`; }).join('')
     +`<span class="tw-label">${P.witness.length} of 9 remembered</span>`;
   $('btn-continue').classList.toggle('hidden', !loadRun());
+  $('btn-ascent').classList.toggle('hidden', !P.witness.includes('s_virgil'));
   const res=$('title-residue');
   if (P.runs>0){
     const r=STORY.helpers.domRes(P);
@@ -129,6 +132,9 @@ function startRun(){
 }
 $('btn-continue').onclick=()=>{ const r=loadRun(); if(!r) return titleScreen();
   S=r; lastDepth=null; show('game-screen'); render(S.node); };
+$('btn-ascent').onclick=()=>{
+  S=newRun(P.playerName||'Pilgrim'); S.flags.ascentDirect=1; lastDepth=null;
+  show('game-screen'); render('n_purgatorio'); };
 
 /* ---------------- galleries ---------------- */
 function gallery(title, sub, bodyHTML){
@@ -215,6 +221,52 @@ const RAIL_COL=['#4a7a6e','#7a8a6a','#8a5a9a','#5a7288','#8a6f3e',
                 '#4e6a4a','#c4552a','#7a5a42','#9a6a3a','#b8d4de'];
 function paintRail(depth, seen){
   seen=seen||[];
+  if (S && S.act==='purgatorio'){
+    // ----- the Mountain -----
+    const graced=!!(P.endings && P.endings['e_beatrice_clear']);
+    const phase=Math.min(6,S.dayPhase||0);
+    const night=curRegion==='pnight';
+    let s=`<svg viewBox="0 0 100 1000" preserveAspectRatio="xMidYMid meet">
+      <defs><linearGradient id="mtbg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${night?'#0a1020':'#16233a'}"/>
+        <stop offset=".6" stop-color="${night?'#0c1428':'#2a3a54'}"/>
+        <stop offset="1" stop-color="#2c3648"/></linearGradient>
+      <radialGradient id="mtsun"><stop offset="0" stop-color="${night?'#dfe8f2':'#f4dfa0'}" stop-opacity=".95"/>
+        <stop offset="1" stop-color="${night?'#dfe8f2':'#f4dfa0'}" stop-opacity="0"/></radialGradient></defs>
+      <rect width="100" height="1000" fill="url(#mtbg)"/>`;
+    // sun (or moon) tracking the day along its arc
+    const sa=Math.PI*(1-phase/6), sx=50+40*Math.cos(sa), sy=170-120*Math.sin(sa);
+    s+=`<circle cx="${sx.toFixed(0)}" cy="${sy.toFixed(0)}" r="16" fill="url(#mtsun)"/>
+        <circle cx="${sx.toFixed(0)}" cy="${sy.toFixed(0)}" r="6.5" fill="${night?'#dfe8f2':'#f4dfa0'}"/>`;
+    // sea at the mountain's foot
+    s+=`<rect x="0" y="930" width="100" height="70" fill="#24405c"/>
+        <path d="M0,932 q25,4 50,0 t50,0" stroke="#3c5a78" fill="none"/>`;
+    // the mountain profile
+    s+=`<path d="M8,930 L50,130 L92,930 Z" fill="#3a3040" opacity=".9"/>
+        <path d="M8,930 L50,130 L92,930" stroke="#5a4a5a" fill="none" stroke-width="1.2"/>`;
+    // Eden glow at the summit
+    s+=`<circle cx="50" cy="118" r="${seen.includes(9)?14:8}" fill="url(#mtsun)" opacity="${seen.includes(9)?.9:.35}"/>`;
+    const tnames=['◦','⚑','I','II','III','IV','V','VI','VII','✿'];
+    for (let i=0;i<10;i++){
+      const y=880-i*82, w=(40*(1-(i/9)*.78)+5);
+      const vis=seen.includes(i), cur=i===depth;
+      s+=`<line x1="${50-w}" y1="${y}" x2="${50+w}" y2="${y}"
+        stroke="${cur?'#f4dfa0':vis?'#8a7a8a':'#4a4054'}" stroke-width="${cur?2:1}"/>`;
+      s+=`<text x="${50+w+6}" y="${y+4}" font-size="12"
+        fill="${cur?'#f4dfa0':vis?'#9a8a9a':'#5a5064'}" font-family="Georgia">${tnames[i]}</text>`;
+      if (cur){
+        s+=`<g class="rail-marker" transform="translate(50,${y})">
+          <path d="M0,-8 q-3.2,4 0,8 q3.2,-4 0,-8 z" fill="#f8f2e2"/>
+          ${graced?`<circle r="6" fill="none" stroke="#cfe4ee" stroke-width=".8" opacity=".8"/>`:''}
+          <circle r="11" fill="none" stroke="#f4dfa0" stroke-width="1">
+            <animate attributeName="r" values="8;13;8" dur="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".7;.15;.7" dur="2.4s" repeatCount="indefinite"/>
+          </circle></g>`;
+      }
+    }
+    $('depth-rail').innerHTML=s+`</svg>`;
+    return;
+  }
   const topY=95, botY=925, out=depth>=10;
   let s=`<svg viewBox="0 0 100 1000" preserveAspectRatio="xMidYMid meet">
     <defs><linearGradient id="railbg" x1="0" y1="0" x2="0" y2="1">
@@ -273,6 +325,46 @@ function paintRail(depth, seen){
 
 /* ---------------- HUD — the Reliquary ---------------- */
 function paintHUD(){
+  if (S.act==='purgatorio'){
+    const phase=Math.min(6,S.dayPhase||0), night=curRegion==='pnight';
+    const sa=Math.PI*(1-phase/6), sx=13+9*Math.cos(sa), sy=17-10*Math.sin(sa);
+    const sun=`<div class="relic" title="${night?'The mountain by night — no one climbs in the dark.':'The sun — the mountain permits climbing only under it. Day '+Math.min(3,Math.ceil((phase+1)/2))+' of the ascent.'}">
+      <svg viewBox="0 0 26 26" width="22" height="22">
+        <path d="M2,18 h22" stroke="#8a6f3e" stroke-width="1.2"/>
+        <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="4.5"
+          fill="${night?'#dfe8f2':'#f4dfa0'}" opacity=".95"/>
+        ${night?'':'<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="7" fill="none" stroke="#f4dfa0" stroke-width=".8" opacity=".5"/>'}
+      </svg></div>`;
+    const pv=S.pace||0, pang=(pv*3.2).toFixed(1);
+    const paceEl=`<div class="relic" title="The pace (${pv>0?'+':''}${pv}) — the mountain punishes rushing and outlasts stalling. Level is the way.">
+      <svg viewBox="0 0 26 26" width="22" height="22">
+        <g style="transform:rotate(${pang}deg);transform-origin:13px 13px;transition:transform .6s">
+          <path d="M8,4 h10 l-4,8 4,8 h-10 l4,-8 z" fill="none" stroke="#c9a35c" stroke-width="1.3"/>
+          <path d="M10,6 h6 l-3,5 z" fill="${Math.abs(pv)>=5?'#c4552a':'#8b8375'}"/>
+          <path d="M10.5,20 h5 l-2.5,-4 z" fill="${Math.abs(pv)>=5?'#c4552a':'#8b8375'}"/>
+        </g></svg></div>`;
+    const brow=`<div class="relic" title="The seven letters — one for each weight. The wings of the terraces take them back.">`
+      +SINS.map(k=>{ const wiped=S.ps&&S.ps[k];
+        return `<svg viewBox="0 0 10 16" width="9" height="15"><title>${k}: ${wiped?'wiped':'carried — burden '+((S.burdens&&S.burdens[k])||0)}</title>
+          <text x="5" y="12" text-anchor="middle" font-size="13" font-family="Georgia"
+            fill="${wiped?'#3a3328':'#c9a35c'}" opacity="${wiped?.45:.95}">P</text>
+          ${wiped?'<line x1="1.5" y1="8" x2="8.5" y2="8" stroke="#8a6f3e" stroke-width="1"/>':''}
+        </svg>`; }).join('')+`</div>`;
+    const pr=(S.prayers||[]).length;
+    const prayerEl=`<div class="relic" title="Prayers carried up — ${pr===0?'none yet. The penitents will ask; prayers weigh nothing.':pr+' riding your breath: '+(S.prayers||[]).map(p=>STORY.prayers&&STORY.prayers[p]?STORY.prayers[p].giver:p).join(', ')}">
+      <svg viewBox="0 0 20 20" width="19" height="19">
+        <path d="M5,3 h10 q2,0 2,2 v10 q0,2 -2,2 h-10 q-2,0 -2,-2 v-10 q0,-2 2,-2 z"
+          fill="${pr>0?'#8a6f3e':'#241f18'}" stroke="${pr>0?'#c9a35c':'#453a2b'}"/>
+        <path d="M6.5,7 h7 M6.5,10 h7 M6.5,13 h4" stroke="${pr>0?'#f0e2c0':'#3a3328'}" stroke-width="1"/>
+      </svg><span style="font-size:12px;color:${pr>0?'#c9a35c':'#5a5040'};margin-left:2px">${pr}</span></div>`;
+    const vg=S.virgil;
+    const virgilEl=S.flags.virgilGone?'':`<div class="relic" title="The guide — out of his jurisdiction, and climbing anyway.">
+      <svg viewBox="0 0 26 26" width="20" height="20" style="opacity:${(.15+vg*.14).toFixed(2)}">
+        <path d="M8,23 q-1.5,-7 2,-10.5 q-2.5,-3 -.5,-6.5 q2,-3.5 5.5,-2.5 q4.5,1 4.5,5 q0,3 -2,4.8 q3.5,3.2 3.5,9.7 z" fill="#d8cfc0"/>
+      </svg></div>`;
+    $('hud').innerHTML=sun+paceEl+brow+prayerEl+virgilEl;
+    return;
+  }
   const sinCol={pride:'#b08a3e',envy:'#5a7a4a',wrath:'#a33b3b',sloth:'#6a6a72',
     greed:'#8a6f3e',gluttony:'#7a5a3a',lust:'#8a4a6a'};
   const st=S.star, vg=S.virgil;
@@ -358,9 +450,18 @@ function render(nodeId){
     setTimeout(()=>gs.classList.remove('descending'),1000);
   }
   lastDepth=reg.depth;
-  S.seen=S.seen||[];
-  if (reg.depth<10 && !S.seen.includes(reg.depth)) S.seen.push(reg.depth);
-  paintRail(reg.depth, S.seen); paintHUD();
+  curRegion=regKey;
+  if (S.act==='purgatorio'){
+    const tier = reg.terrace!==undefined ? reg.terrace : 0;
+    S.seenT=S.seenT||[];
+    if (!S.seenT.includes(tier)) S.seenT.push(tier);
+    paintRail(tier, S.seenT);
+  } else {
+    S.seen=S.seen||[];
+    if (reg.depth<10 && !S.seen.includes(reg.depth)) S.seen.push(reg.depth);
+    paintRail(reg.depth, S.seen);
+  }
+  paintHUD();
   $('region-name').textContent=reg.name;
   $('node-title').textContent=fmt(n.title);
   const txt=$('node-text');
@@ -433,6 +534,14 @@ function choose(c){
   if (c.heart) S.heart=clamp(S.heart+c.heart,-6,6);
   if (c.virgil) S.virgil=clamp(S.virgil+c.virgil,0,6);
   if (c.star){ S.star=clamp(S.star+c.star,0,6); AUDIO.setStar(S.star); }
+  // ACT II effects: pace, burden work, prayers, letters wiped
+  if (c.pace) S.pace=clamp((S.pace||0)+c.pace,-8,8);
+  if (c.burden && S.burdens)
+    for(const k in c.burden) S.burdens[k]=clamp((S.burdens[k]||0)+c.burden[k],0,6);
+  if (c.pray && S.prayers && !S.prayers.includes(c.pray)){
+    S.prayers.push(c.pray); AUDIO.sting('remember'); }
+  if (c.wipeP && S.ps){ S.ps[c.wipeP]=1;
+    if (S.burdens) S.burdens[c.wipeP]=0; AUDIO.sting('absolve'); }
   if (c.learnVerse){ if(!S.verses.includes(c.learnVerse)) S.verses.push(c.learnVerse);
     if(!P.versesFound.includes(c.learnVerse)){ P.versesFound.push(c.learnVerse); saveP(); }
     AUDIO.sting('verse'); }
@@ -453,9 +562,10 @@ function choose(c){
   const endId = typeof c.end==='function' ? c.end(S,P) : c.end;
   if (endId) return ending(endId);
   // Virgil walks: if his regard is spent before the climb, he goes home
+  // (on the mountain he is out of his jurisdiction — no departures there)
   let next = typeof c.go==='function' ? c.go(S,P) : c.go;
-  if (S.virgil<=0 && next && !['n_climb','n_exit','n_exit2','n_purgatorio','n_beatrice_gate',
-      'n_beatrice_verdict','n_abandoned'].includes(next))
+  if (S.act!=='purgatorio' && S.virgil<=0 && next
+      && !['n_climb','n_exit','n_exit2','n_purgatorio','n_beatrice_verdict','n_abandoned'].includes(next))
     next='n_abandoned';
   if (next) render(next);
 }

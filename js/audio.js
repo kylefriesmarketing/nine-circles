@@ -14,7 +14,7 @@
    ===================================================================== */
 const AUDIO = (() => {
 let ctx=null, master=null, musicBus=null, sfxBus=null, lp=null;
-let current=null, bellTimer=null, motifTimer=null, pulseTimer=null;
+let current=null, bellTimer=null, motifTimer=null, pulseTimer=null, birdTimer=null;
 let star=4, depth=0, motifKey=null, rootNow=45;
 let prefs={music:true,sfx:true};
 
@@ -42,6 +42,19 @@ const REGION_CFG = {
   stars:   { noise:'wind', nLvl:.02, drone:[0,7,12],pulse:0, bells:2, warm:1 },
   purgatorio:{noise:'water',nLvl:.04,drone:[0,7,12],pulse:0, bells:2, warm:1 },
   beatrice:{ noise:'wind', nLvl:.01, drone:[0,7,12,16],pulse:0,bells:3, warm:1 },
+  /* ----- ACT II: the Mountain ----- */
+  pgate:   { noise:'wind', nLvl:.03, drone:[0,7,12], pulse:0,  bells:2, warm:1 },
+  t_pride: { noise:'wind', nLvl:.03, drone:[0,5,12], pulse:9,  bells:1, warm:1 },
+  t_envy:  { noise:'wind', nLvl:.05, drone:[0,3,10], pulse:0,  bells:1, warm:1 },
+  t_wrath: { noise:'marsh',nLvl:.06, drone:[0,3],    pulse:0,  bells:0, warm:1 },
+  t_sloth: { noise:'wind', nLvl:.03, drone:[0,7],    pulse:13, bells:1, warm:1 },
+  t_greed: { noise:'wind', nLvl:.04, drone:[0,5,10], pulse:6,  bells:1, warm:1 },
+  t_gluttony:{noise:'water',nLvl:.05,drone:[0,7,12], pulse:0,  bells:1, warm:1 },
+  t_lust:  { noise:'fire', nLvl:.09, drone:[0,7,12], pulse:0,  bells:1, warm:1 },
+  pnight:  { noise:'wind', nLvl:.02, drone:[0,7],    pulse:0,  bells:2, warm:1, shimmer:1 },
+  eden:    { noise:'water',nLvl:.04, drone:[0,7,12,16],pulse:0,bells:2, warm:1, birds:1 },
+  pageant: { noise:'wind', nLvl:.02, drone:[0,7,12,16],pulse:8,bells:3, warm:1 },
+  lethe:   { noise:'water',nLvl:.06, drone:[0,7,12,16],pulse:0,bells:3, warm:1, birds:1 },
 };
 
 /* her theme — and how much of it grace can still afford */
@@ -92,7 +105,7 @@ function noiseBuf(){
   return b;
 }
 function stopCurrent(){
-  [bellTimer,motifTimer].forEach(t=>t&&clearTimeout(t)); bellTimer=motifTimer=null;
+  [bellTimer,motifTimer,birdTimer].forEach(t=>t&&clearTimeout(t)); bellTimer=motifTimer=birdTimer=null;
   if (pulseTimer){clearInterval(pulseTimer);pulseTimer=null;}
   if (!current) return;
   const t=ctx.currentTime;
@@ -210,6 +223,20 @@ function setScene(regionKey,depthLvl,starLvl,motif){
     const s1=osc('sine',midiHz(rootMidi+36),.015,musicBus);
     const s2=osc('sine',midiHz(rootMidi+36)+2.7,.015,musicBus);
     nodes.push(s1.o,s2.o);gains.push(s1.g,s2.g);
+  }
+  if (cfg.birds){
+    // Eden: brief random birdsong chirps, high and unhurried
+    const chirp=()=>{ if(!current) return;
+      const base=1800+Math.random()*1400, n=2+Math.floor(Math.random()*3);
+      for(let i=0;i<n;i++) setTimeout(()=>{
+        const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime;
+        o.type='sine';o.frequency.setValueAtTime(base+Math.random()*300,t);
+        o.frequency.exponentialRampToValueAtTime(base*1.3,t+.09);
+        g.gain.setValueAtTime(.03,t);g.gain.exponentialRampToValueAtTime(.0001,t+.14);
+        o.connect(g);g.connect(musicBus);o.start(t);o.stop(t+.16);
+      }, i*140);
+      birdTimer=setTimeout(chirp, 3000+Math.random()*7000); };
+    birdTimer=setTimeout(chirp, 1500);
   }
   current={nodes,gains};
   if (pulseTimer) clearInterval(pulseTimer);
