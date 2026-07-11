@@ -14,10 +14,20 @@ const $=id=>document.getElementById(id);
 function loadP(){
   try{ const p=JSON.parse(localStorage.getItem(K_PERSIST)); if(p) return p; }catch(e){}
   return { runs:0, endings:{}, witness:[], residue:{}, lastEnding:null,
-    lastEndingTitle:null, playerName:'', versesFound:[], deepest:0 };
+    lastEndingTitle:null, playerName:'', versesFound:[], deepest:0,
+    fx:{tw:1,music:1,sfx:1} };
 }
 function saveP(){ localStorage.setItem(K_PERSIST, JSON.stringify(P)); }
 let P = loadP();
+P.fx = P.fx || {tw:1,music:1,sfx:1};
+AUDIO.setPrefs(P.fx.music, P.fx.sfx);
+let toastTimer=null;
+function toast(msg){
+  let t=$('toast');
+  if (!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1500);
+}
 
 /* ---------------- run state ---------------- */
 function newRun(name){
@@ -27,6 +37,7 @@ function newRun(name){
     absolved:0, punished:0 };
 }
 let S=null;
+let lastDepth=null;
 function saveRun(){ if(S) localStorage.setItem(K_RUN, JSON.stringify(S)); }
 function clearRun(){ localStorage.removeItem(K_RUN); }
 function loadRun(){ try{ return JSON.parse(localStorage.getItem(K_RUN)); }catch(e){ return null; } }
@@ -80,10 +91,19 @@ function show(id){ ['title-screen','game-screen','ending-screen','name-screen','
 /* ---------------- title ---------------- */
 function titleScreen(){
   show('title-screen');
+  lastDepth=null;
+  AUDIO.setScene('title',0,3,null);
   ART.paint($('title-art'),'title','run'+P.runs);
   $('title-art').insertAdjacentHTML('beforeend',
     `<img id="title-hero-img" src="${IMG_ROOT}/ui/title-hero.jpg" alt="" onerror="this.remove()">`
     +`<div class="atmo"><div class="fogx"></div>${particles('gate')}</div>`);
+  const order=['s_francesca','s_ciacco','s_forgotten','s_sullen','s_cavalcante',
+    's_pier','s_ulysses','s_ugolino','s_virgil'];
+  $('title-wall').innerHTML = P.witness.length===0 ? '' :
+    order.map(id=>{ const lit=P.witness.includes(id);
+      return `<div class="tw-slot ${lit?'lit':''}" title="${lit?SOULS[id].name:'— unspoken —'}"
+        ${lit?`style="background-image:url('${IMG_ROOT}/souls/${id}.jpg')"`:''}></div>`; }).join('')
+    +`<span class="tw-label">${P.witness.length} of 9 remembered</span>`;
   $('btn-continue').classList.toggle('hidden', !loadRun());
   const res=$('title-residue');
   if (P.runs>0){
@@ -100,10 +120,10 @@ $('name-input').addEventListener('keydown',e=>{ if(e.key==='Enter') startRun(); 
 function startRun(){
   const nm=($('name-input').value.trim()||'Pilgrim').slice(0,16);
   P.playerName=nm; saveP();
-  S=newRun(nm); show('game-screen'); render(S.node);
+  S=newRun(nm); lastDepth=null; show('game-screen'); render(S.node);
 }
 $('btn-continue').onclick=()=>{ const r=loadRun(); if(!r) return titleScreen();
-  S=r; show('game-screen'); render(S.node); };
+  S=r; lastDepth=null; show('game-screen'); render(S.node); };
 
 /* ---------------- galleries ---------------- */
 function gallery(title, sub, bodyHTML){
@@ -310,7 +330,16 @@ function render(nodeId){
   P.deepest=Math.max(P.deepest,reg.depth);
   ART.paint($('scene-art'), regKey, nodeId+P.runs);
   sceneLayers($('scene-art'),'scenes',regKey,{region:regKey});
-  AUDIO.setScene(regKey, reg.depth, S.star);
+  AUDIO.setScene(n.music||regKey, reg.depth, S.star,
+    n.judge ? n.judge.soul : (nodeId==='n_rite' ? S.flags.rite.soul : (n.motif||null)));
+  // the descent: a veil falls when you go a circle deeper
+  if (lastDepth!==null && reg.depth>lastDepth && reg.depth<10){
+    const gs=$('game-screen');
+    gs.classList.remove('descending'); void gs.offsetWidth; gs.classList.add('descending');
+    AUDIO.sting('descend');
+    setTimeout(()=>gs.classList.remove('descending'),1000);
+  }
+  lastDepth=reg.depth;
   S.seen=S.seen||[];
   if (reg.depth<10 && !S.seen.includes(reg.depth)) S.seen.push(reg.depth);
   paintRail(reg.depth, S.seen); paintHUD();
@@ -318,7 +347,13 @@ function render(nodeId){
   $('node-title').textContent=fmt(n.title);
   const txt=$('node-text');
   const body=fmt(n.text);
-  txt.innerHTML=(n.judge?`<img class="soul-medallion" src="${IMG_ROOT}/souls/${n.judge.soul}.jpg" alt="" onerror="this.remove()">`:'')+body;
+  const med=n.judge?`<img class="soul-medallion" src="${IMG_ROOT}/souls/${n.judge.soul}.jpg" alt="" onerror="this.remove()">`:'';
+  let html=body, paras=1;
+  if (P.fx.tw){
+    const parts=body.split('\n\n'); paras=parts.length;
+    html=parts.map((p,i)=>`<span class="para" style="animation-delay:${Math.min(i,8)*150}ms">${p}</span>`).join('\n\n');
+  }
+  txt.innerHTML=med+html;
   txt.classList.toggle('dropcap', /^[A-Za-z]/.test(body));
   const box=$('choices'); box.innerHTML='';
   n.choices.forEach((c,ix)=>{
@@ -345,9 +380,9 @@ function render(nodeId){
     const rite=(verb)=>{ S.judged[jid]=verb;
       S.flags.rite={soul:jid,verb,go:jgo,region:regKey};
       if (verb==='absolve'){ S.absolved=(S.absolved||0)+1;
-        S.star=clamp(S.star-1,0,6); AUDIO.setStar(S.star); AUDIO.sting('verse'); }
+        S.star=clamp(S.star-1,0,6); AUDIO.setStar(S.star); AUDIO.sting('absolve'); }
       else { S.punished=(S.punished||0)+1;
-        S.sins.wrath=clamp(S.sins.wrath+1,0,9); AUDIO.sting('death'); }
+        S.sins.wrath=clamp(S.sins.wrath+1,0,9); AUDIO.sting('punish'); }
       render('n_rite'); };
     if (S.star>=4){
       const b=document.createElement('button'); b.className='choice holy';
@@ -360,6 +395,8 @@ function render(nodeId){
       b.onclick=()=>rite('punish'); box.appendChild(b);
     }
   }
+  box.classList.toggle('late', !!P.fx.tw);
+  box.style.animationDelay = P.fx.tw ? (Math.min(paras,8)*150+250)+'ms' : '0ms';
   const gs=$('game-screen'); gs.classList.remove('fade-in'); void gs.offsetWidth;
   gs.classList.add('fade-in');
   $('text-panel').scrollTop=0;
@@ -368,6 +405,7 @@ function render(nodeId){
 
 /* ---------------- choice resolution ---------------- */
 function choose(c){
+  const jCount=Object.keys(S.judged).length;
   if (c.sin) for(const k in c.sin) S.sins[k]=clamp(S.sins[k]+c.sin[k],0,9);
   if (c.heart) S.heart=clamp(S.heart+c.heart,-6,6);
   if (c.virgil) S.virgil=clamp(S.virgil+c.virgil,0,6);
@@ -378,6 +416,11 @@ function choose(c){
   if (c.remember && !S.names.includes(c.remember) && S.names.length<3){
     S.names.push(c.remember); AUDIO.sting('remember'); }
   if (c.fx) c.fx(S,P);
+  const jKeys=Object.keys(S.judged);
+  if (jKeys.length>jCount){
+    const v=S.judged[jKeys[jKeys.length-1]];
+    if (v==='pity'||v==='condemn') AUDIO.sting(v);
+  }
   if (c.gleam && S.sins[c.gleam]>=3) AUDIO.sting('gleam');
 
   const endId = typeof c.end==='function' ? c.end(S,P) : c.end;
@@ -465,8 +508,14 @@ function debugPanel(){
   $('dbg-rites').onclick=()=>{ if(!S)return; S.absolved=4; S.punished=3; render(S.node); };
 }
 document.addEventListener('keydown',e=>{
-  if (e.key==='`'||e.key==='~') debugPanel();
-  else if (e.key==='m'&&!e.target.matches('input')) AUDIO.toggleMute();
+  if (e.key==='`'||e.key==='~') return debugPanel();
+  if (e.target && e.target.matches && e.target.matches('input')) return;
+  if (e.key==='m'){ P.fx.music=AUDIO.toggleMusic()?1:0; saveP();
+    toast(P.fx.music?'music: lit':'music: snuffed'); }
+  else if (e.key==='n'){ P.fx.sfx=AUDIO.toggleSfx()?1:0; saveP();
+    toast(P.fx.sfx?'echoes: lit':'echoes: snuffed'); }
+  else if (e.key==='t'){ P.fx.tw=P.fx.tw?0:1; saveP();
+    toast(P.fx.tw?'the text unfurls':'the text arrives whole'); }
 });
 
 /* ---------------- boot ---------------- */

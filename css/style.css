@@ -195,6 +195,29 @@ kbd{border:1px solid var(--gold-dim);border-radius:3px;padding:0 4px;font-family
   animation:kenburns 55s ease-in-out infinite alternate}
 #title-screen .title-inner{background:radial-gradient(ellipse 90% 90% at 50% 45%,#00000088,transparent)}
 
+/* ---------- delights: descent veil, unfurl, title wall, toast ---------- */
+#game-screen.descending #scene-wrap::before{content:'';position:absolute;left:0;right:0;
+  top:-30%;height:160%;z-index:30;pointer-events:none;
+  background:linear-gradient(180deg,transparent,#000 32%,#000 62%,transparent);
+  animation:veilfall .95s ease-in forwards}
+@keyframes veilfall{from{transform:translateY(-105%)}to{transform:translateY(105%)}}
+.para{opacity:0;animation:parain .55s ease forwards}
+@keyframes parain{to{opacity:1}}
+#choices.late{opacity:0;animation:parain .55s ease forwards}
+#title-wall{display:flex;gap:8px;justify-content:center;align-items:center;
+  margin:2px 0 12px;min-height:30px;flex-wrap:wrap}
+#title-wall .tw-slot{width:27px;height:27px;border-radius:50%;border:1px solid #3a332a;
+  background-color:#14100c;background-size:cover;background-position:center;opacity:.45}
+#title-wall .tw-slot.lit{border-color:var(--gold-dim);opacity:1;
+  box-shadow:0 0 10px #c9a35c55}
+#title-wall .tw-label{font-size:11px;color:var(--gold-dim);letter-spacing:.16em;
+  margin-left:8px;text-transform:uppercase}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:99;
+  background:#14100cee;border:1px solid #c9a35c44;color:var(--bone);padding:8px 20px;
+  font-family:var(--serif);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;
+  opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+
 /* fades */
 .fade-out{animation:fadeout .45s forwards}
 .fade-in{animation:fadein .55s}

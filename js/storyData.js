@@ -276,7 +276,7 @@ n_acheron: { region:'acheron', title:'The Ferryman',
   ]},
 
 /* ---------------- LIMBO ---------------- */
-n_limbo: { region:'limbo', title:'The First Circle',
+n_limbo: { region:'limbo', motif:'s_virgil', title:'The First Circle',
   text:S=>(S.flags.coin?`(Charon took the coin, examined it with maritime disgust, and threw it in the river. It is presumably still falling.)\n\n`:``)
     +`No screams here. That is the whole punishment: no screams, no fire, no hope — a green place under a dome of pale light, where sighs stand in for weather.\n\nAnd the poet stands differently, suddenly. Shoulders squared to the light like a man at his own front door.\n\n<em>“This is mine,”</em> he says quietly. <em>“The circle of those born too early to be saved, or never told. We did not sin, {NAME}. We merely… missed. This is where I am kept, and where I return when my errands are done. Eternity in a waiting room with excellent company.”</em>\n\nAcross the meadow, four crowned shadows raise their hands to him in grave salute.`,
   choices:[
@@ -288,7 +288,7 @@ n_limbo: { region:'limbo', title:'The First Circle',
     { t:'Stay. Green fields, great poets, no fire. This is fine.', gleam:'pride',
       sin:{sloth:1,pride:1}, end:'e_limbo' },
   ]},
-n_limbo_poets: { region:'limbo', title:'The School of the Great',
+n_limbo_poets: { region:'limbo', motif:'s_virgil', title:'The School of the Great',
   text:S=>(S.flags.limboKids?`<em>“The children?”</em> He is silent for four steps. <em>“They are the argument no one here has won in five thousand years. Walk. Some doors should not be leaned on.”</em>\n\n`:``)
     +`Homer leads them — blind, sword-carrying, magnificent, a man who is somehow more of a place. They greet your poet as the sixth of their number, and for one strange moment they consider you: the breathing thing, the tourist, the person with a return ticket.\n\n<em>“Remember what you see,”</em> says Homer, in the direction of your bones. <em>“It is what we are all made of now. Being remembered. It is not nothing, but it is not weather, and it is not bread.”</em>\n\nYour poet touches your shoulder. Downhill, always downhill: a seat of coiled shadow waits, and below it, the true descent.`,
   choices:[
@@ -887,7 +887,7 @@ n_ugolino_after: { region:'ice', title:'What the Ice Keeps',
   choices:[
     { t:'Walk the last silence.', go:'n_judecca' },
   ]},
-n_judecca: { region:'ice', title:'Judecca',
+n_judecca: { region:'ice', music:'judecca', title:'Judecca',
   text:S=>{ const n=S.names.length;
     return `Total silence, except the wind, which is not weather but wingbeat. The souls here are fully entombed in the ice — some lying, some upright, some inverted like things poured wrong — beyond speech, beyond plea, beyond even the begging-to-be-remembered that has followed you down nine circles like rain.\n\nNothing here can ask you for anything. That is the loneliest fact in the universe.\n\n${n>0?`The name${n>1?'s':''} you carry — ${S.names.map(id=>souls[id].name).join(', ')} — sit${n===1?'s':''} warm against the cold, like coals in a pocket.`:`Your pockets are empty of names. You carried no one. The thought has a temperature, and it matches the lake’s.`}\n\nAhead, in the fog of its own wingbeat: a shape the size of the world’s worst idea.`; },
   choices:[
@@ -930,7 +930,7 @@ n_climb: { region:'lucifer', title:'The Ladder of Fur',
     { t:'“Poet — HOW—”', virgil:1, go:'n_exit', fx:S=>S.flags.askedHow=1 },
     { t:'Look back once at the inverted feet of the Devil.', star:-1, go:'n_exit' },
   ]},
-n_exit: { region:'lucifer', title:'The Burrow at the Bottom of the World',
+n_exit: { region:'lucifer', motif:'s_virgil', title:'The Burrow at the Bottom of the World',
   enter:(S,P)=>{ S.flags.marks = P.witness.filter(w=>w!=='s_virgil').length; },
   text:S=>(S.flags.askedHow?`(<em>“By such stairs,”</em> he said, not stopping, <em>“must we depart from so much evil. Also: gravity is a local ordinance. Climb.”</em>)\n\n`:``)
     +`A natural burrow winds up through the rock — no torches, no verses carved anywhere, blessedly unadministered. And far ahead, through the round mouth of it: a coin of night sky. Actual sky. With actual stars, doing their ancient unbothered arithmetic.\n\nThe sound of a little stream keeps you company upward, wearing the mountain away on a schedule of its own.`
@@ -953,7 +953,7 @@ n_exit: { region:'lucifer', title:'The Burrow at the Bottom of the World',
     { t:'Look back down the burrow one last time.', go:'n_exit2',
       fx:S=>S.flags.lookedBack=1 },
   ]},
-n_exit2: { region:'lucifer', title:'The Threshold',
+n_exit2: { region:'lucifer', motif:'s_virgil', title:'The Threshold',
   text:S=>(S.flags.hugged?`He permits the embrace with the rigid astonishment of a man being hugged by a era that hasn’t been invented yet. <em>“Yes. Well,”</em> he says again — his phrase for feelings — and pats your shoulder twice, exactly twice, as if metering it.\n\n`
     :`The burrow behind you goes down into everything you now know is there. It has the decency to be silent about it.\n\n`)
     +`The coin of sky waits. The stream keeps working. Somewhere above, the world is still running — dinner tables, morning songs, quiet rooms where names are said or not said.\n\nOne step remains.`,
