@@ -56,32 +56,77 @@ const verses = {
 const VQ = id => '<span class="verse-quote">' + verses[id].lines.join('<br>') +
   '</span>';
 
+/* Hell remembers: the souls recognize returning pilgrims.
+   inscribed = their name stands on the Witness Wall (said above, forever);
+   mercy / harm = your last verdict on them, from a previous descent. */
+const soulMem = (S,P,id) => {
+  const sm = souls[id] && souls[id].mem;
+  if (!sm) return '';
+  if (P.witness.includes(id)) return `<span class="mem">${sm.inscribed}</span>\n\n`;
+  const m = S.memory && S.memory[id];
+  if (!m) return '';
+  const harsh = (m.last==='condemn' || m.last==='punish');
+  return `<span class="mem">${harsh?sm.harm:sm.mercy}</span>\n\n`;
+};
+
 /* ---------------- witness souls (one per circle; the 9th is the Guide) --- */
 const souls = {
   s_francesca:{ name:'Francesca da Rimini', circle:'Circle II — Lust',
     absolveLine:`You lift the star’s light and spend a candle of it, and the storm STUTTERS. For one heartbeat the two of them hang in still air — uncarried, unblown, holding — and Francesca looks up as if a window opened in the weather.\n\n<em>“Oh,”</em> she says. Just that. The wind takes them back, because the wind holds the lease. But it takes them <em>gently</em>, this once, and somewhere in the ribbons of the flying dead, a rumor begins that the sky blinked.`,
-    punishLine:`The scythe passes through the whirlwind and the whirlwind SCREAMS — a new note, one it did not have before, and the flying dead scatter from it like starlings from a shot.\n\nThe two of them are gone into the black of the storm. You have punished the punished, and Hell — listen — Hell does not object. That is the worst review your arm has ever received.` },
+    punishLine:`The scythe passes through the whirlwind and the whirlwind SCREAMS — a new note, one it did not have before, and the flying dead scatter from it like starlings from a shot.\n\nThe two of them are gone into the black of the storm. You have punished the punished, and Hell — listen — Hell does not object. That is the worst review your arm has ever received.`,
+    mem:{
+      inscribed:`“You came back,” she says, before you can speak. “I felt it, you know — every time you say my name up there, the wind loses its grip on me for exactly that long. Paolo counts the seconds. We hoard them like bread.”`,
+      mercy:`“You,” she says softly, knowing you at once. “The gentle one. The storm remembers gentleness — it has so little else to file.”`,
+      harm:`“You,” she says, and the wind goes a degree colder around her. “The one who reads verdicts. Have you come to deliver another, or has the book found a kinder page?”` } },
   s_ciacco:   { name:'Ciacco of Florence',  circle:'Circle III — Gluttony',
     absolveLine:`A candle of the star, spent — and over one patch of mud, one body’s length of Hell, the rain STOPS.\n\nCiacco lies in the dry like a man in clean sheets. He does not speak. He breathes — the dead don’t need to, which is how you know it’s a luxury — one long dry breath seven hundred years in arrears. The rain resumes, because rain is the law here. But he looked, for a moment, like a man at a table among friends.`,
-    punishLine:`The scythe comes down and the rain comes down harder, as if in applause. What was Ciacco is spread thinner into the mud that was already mostly him.\n\nThe three-headed dog howls approval in a chord. You have made the circle of appetite a little more appetizing, and the rain washes your arm clean with unsettling efficiency.` },
+    punishLine:`The scythe comes down and the rain comes down harder, as if in applause. What was Ciacco is spread thinner into the mud that was already mostly him.\n\nThe three-headed dog howls approval in a chord. You have made the circle of appetite a little more appetizing, and the rain washes your arm clean with unsettling efficiency.`,
+    mem:{
+      inscribed:`He struggles upright before you even reach him. “The DINNER,” he beams through the rain. “Someone said my name at a table — I FELT it, warm, here—” he thumps his sternum. “The rain stopped for one whole breath. You kept it. You actually kept it.”`,
+      mercy:`“The kind visitor,” he says, sitting up faster this time. “I told the mud about you. The mud was skeptical.”`,
+      harm:`He does not sit all the way up this time. “Come to tell me again what I already am? The rain covers that department, friend. Thoroughly.”` } },
   s_forgotten:{ name:'———, the Forgotten', circle:'Circle IV — Greed',
     absolveLine:`You spend the light, and for one instant — one — his face is not a worn coin. Something surfaces: two syllables, rising through the mud of him like a bubble from the marsh below.\n\nHis mouth shapes the first one. Then it is gone, sunk again, and his face is smooth as ever. But he weeps like a sailor who saw land — no arrival, only the mercy of the sighting — and pushes his little stone on with something almost like posture.`,
-    punishLine:`The scythe splits the boulder, not the man — and the man SCREAMS, because the boulder was the last thing that was his.\n\nHe gathers the halves like children and pushes them separately now, twice the laps, half the stone. The wheel does not slow. Around you, hoarders and squanderers nod at the arithmetic: everything down here divides, and nothing subtracts.` },
+    punishLine:`The scythe splits the boulder, not the man — and the man SCREAMS, because the boulder was the last thing that was his.\n\nHe gathers the halves like children and pushes them separately now, twice the laps, half the stone. The wheel does not slow. Around you, hoarders and squanderers nod at the arithmetic: everything down here divides, and nothing subtracts.`,
+    mem:{
+      inscribed:`The bent shade stops his stone before you find him. “Someone remembers THAT I WAS,” he whispers. “Not the name — there is no name — but the was. It reached me like a coin dropped down a well. I have been listening to it ring ever since.”`,
+      mercy:`He looks up, almost recognizing. “You stopped, before,” he says. “Nobody stops twice. What are you?”`,
+      harm:`He flinches from your shadow before he sees you. “The auditor,” he says, gripping his stone. “Back for the rest of me. There is so little left to assess.”` } },
   s_sullen:   { name:'The Sullen One',      circle:'Circle V — the Marsh',
     absolveLine:`You spend a candle over the black water, and the marsh EXHALES.\n\nEvery bubble she never let rise comes up at once — a lifetime of held mornings, breaking the surface in one long silver rope — and for a moment the Styx sounds like a kitchen at dawn: something rinsing, someone humming, a window with sun in it.\n\nThe mud reseals, because the mud is the sentence. But she goes down lighter. You heard her go down lighter.`,
-    punishLine:`The scythe goes into the marsh and the marsh accepts it the way it accepts everything — sullenly.\n\nThe bubbles stop. That is all. The one voice down there that had finally learned to speak goes back to what it knew best, and the silence you have purchased sounds exactly like the silence she made all her life. Hell notes, in its ledger, no change.` },
+    punishLine:`The scythe goes into the marsh and the marsh accepts it the way it accepts everything — sullenly.\n\nThe bubbles stop. That is all. The one voice down there that had finally learned to speak goes back to what it knew best, and the silence you have purchased sounds exactly like the silence she made all her life. Hell notes, in its ledger, no change.`,
+    mem:{
+      inscribed:`The bubbles rise to meet you, arranged, almost eager. “You said it aloud — up there, in the sweet air,” the voice gurgles. “I heard my own story travel DOWN for once. It sounded almost like a song when it arrived.”`,
+      mercy:`“The one who knelt,” the marsh says, before you kneel. “I kept the ripples you left. The mud lets me keep so little.”`,
+      harm:`The bubbles hesitate at your shadow. “You again,” the water says flatly. “Come to grade my grief a second time?”` } },
   s_cavalcante:{name:'Cavalcante, a Father',circle:'Circle VI — Heresy',
     absolveLine:`You spend the light over the burning tomb, and the old man stops sinking.\n\nHe looks at you — through you — at something over your shoulder that is not there, and his face floods with a certainty no evidence has ever supplied: <em>“He lives,”</em> he says. <em>“My son lives. I can feel the light on him from here.”</em>\n\nIt is not true and it is not false; it is absolved. He goes down into the fire the way a man goes down to dinner.`,
-    punishLine:`The scythe rings on the tomb’s rim like a bell in an empty church, and the lid — which never closes — grows visibly heavier.\n\nThe old man’s eyes find yours as he sinks, and there is no reproach in them, which is unbearable. He spent his life believing nothing outlasts the body. You have just spent your arm confirming it.` },
+    punishLine:`The scythe rings on the tomb’s rim like a bell in an empty church, and the lid — which never closes — grows visibly heavier.\n\nThe old man’s eyes find yours as he sinks, and there is no reproach in them, which is unbearable. He spent his life believing nothing outlasts the body. You have just spent your arm confirming it.`,
+    mem:{
+      inscribed:`He rises already reaching for you. “You TOLD someone,” he says, wet-eyed. “About a father who asks. A living voice said his name and MINE in one sentence — I heard it land down here, like light coming through the lid.”`,
+      mercy:`“The kind stranger,” he says, rising with something like hope's posture. “You were gentle with an old man's question once. Ask me anything — my turn is centuries overdue.”`,
+      harm:`He rises more slowly this time, guarded. “The silent one. Or was it the honest one — the two blur, down here. Both leave a man burning either way.”` } },
   s_pier:     { name:'Pier delle Vigne',    circle:'Circle VII — the Wood',
     absolveLine:`You spend a candle of the star on the bleeding tree, and — slowly, at the tip of one warped branch — a single leaf turns GREEN.\n\nOne leaf. In the whole gray wood, one. The Harpies go silent, staring at it like auditors at an impossible figure. It will not last; nothing here lasts except lasting. But every tree in the forest of the hopeless is leaning toward it, and the lean is the prayer.`,
-    punishLine:`You put the scythe into the tree that was the emperor’s right hand, and the wood screams in exactly the voice you have been trying not to imagine.\n\nThe Harpies descend before the sap stops — leaves are food here, and wounds are the menu. What was left of a faithful man feeds the things that lament him. The whispers, wherever they are, add your name to the minutes.` },
+    punishLine:`You put the scythe into the tree that was the emperor’s right hand, and the wood screams in exactly the voice you have been trying not to imagine.\n\nThe Harpies descend before the sap stops — leaves are food here, and wounds are the menu. What was left of a faithful man feeds the things that lament him. The whispers, wherever they are, add your name to the minutes.`,
+    mem:{
+      inscribed:`The leaves go still as you approach — all of them, the whole grove attending. “The advocate,” the tree says. “Somewhere above, my name is said WHOLE again. No pause in it. The Harpies nest elsewhere now; they dislike the taste of vindication.”`,
+      mercy:`“You bound my wound once,” the bleeding voice says as you near. “Sap remembers. Wood keeps every kindness in its rings.”`,
+      harm:`The branches draw back from your reach. “The prosecutor returns,” the voice says. “Break nothing this visit. The whispers already took everything breakable.”` } },
   s_ulysses:  { name:'Ulysses',             circle:'Circle VIII — Fraud',
     absolveLine:`You raise the star’s light to the horned flame — and the flame leans away, courteous as a man declining a chair.\n\n<em>“Save the candle, pilgrim,”</em> the voice says, and it is almost fond. <em>“Absolve me and I am only a sailor with no sentence, and a sailor with no sentence SAILS. We would be back here within the year, both of us. Spend your light on the ones who want doors. I never met a door I didn’t take personally.”</em>\n\nThe flame walks its trench. The absolution counts — Heaven scores the offer, not the acceptance — but he has, of course, the last word. He always had the last word.`,
-    punishLine:`The scythe passes through the horned flame and the flame divides — and REJOINS, laughing, the way water laughs at swords.\n\n<em>“I burned for eight centuries before you were a rumor,”</em> the voice says, not unkindly. <em>“Fire is not punished by edges. But I will tell the demons you tried; they collect attempts.”</em> Somewhere below, something with tusks writes it down.` },
+    punishLine:`The scythe passes through the horned flame and the flame divides — and REJOINS, laughing, the way water laughs at swords.\n\n<em>“I burned for eight centuries before you were a rumor,”</em> the voice says, not unkindly. <em>“Fire is not punished by edges. But I will tell the demons you tried; they collect attempts.”</em> Somewhere below, something with tusks writes it down.`,
+    mem:{
+      inscribed:`The horned flame leans out before you hail it. “They say it above — ‘he sailed.’ I have heard it through the rock, pilgrim. Twice now.” The flame bows, courtly. “The sentence stands. But the STORY got out. In my trade, that is called reaching port.”`,
+      mercy:`“The listener,” the flame says, warming. “Back for another tale? I have thirty more voyages in here and one honest regret. Choose carefully which you ask for.”`,
+      harm:`The flame draws itself up tall. “The judge returns. Very well — file your verdicts, pilgrim. I outlasted Troy. I will outlast your paperwork.”` } },
   s_ugolino:  { name:'Count Ugolino',       circle:'Circle IX — the Ice',
     absolveLine:`You spend the light over the two frozen together, and the frost around Ugolino’s eyes recedes — an inch, a thaw the width of a word.\n\nHe sets the skull down. Sets it down — the first release in seven hundred years — and looks at his hands as if they had returned from a long journey. <em>“One hour,”</em> he says, to no one. <em>“Give a man one hour off from hating and he remembers everything else.”</em> He weeps, and the tears freeze, and he takes the skull back up. But there was an hour in him. You saw it.`,
-    punishLine:`The scythe hums against the ice and the ice hums back, louder — and the blade stops a hand’s width from the frozen men, refused.\n\nEven Death’s edge defers to this lake. What is sealed in Cocytus was sentenced by an older court than the one that issued your blade. Ugolino watches the scythe withdraw with professional interest: he too once held an instrument he could not use.` },
+    punishLine:`The scythe hums against the ice and the ice hums back, louder — and the blade stops a hand’s width from the frozen men, refused.\n\nEven Death’s edge defers to this lake. What is sealed in Cocytus was sentenced by an older court than the one that issued your blade. Ugolino watches the scythe withdraw with professional interest: he too once held an instrument he could not use.`,
+    mem:{
+      inscribed:`He sets the skull down when he sees you — down, on his own, unasked. “The children's names,” he says, plainly. “Said in sunlight. Gaddo. Uguccione. I felt each one arrive like bread.” The frost around his eyes has never refrozen quite right since.`,
+      mercy:`He lifts his mouth from the skull unbidden. “The one who traded grief for grief,” he says. “Grief remembers its creditors.”`,
+      harm:`He does not lift his mouth. Between bites, muffled: “The magistrate returns. Hell is FULL of magistrates. The ice files you all under one heading.”` } },
   s_virgil:   { name:'Virgil, the Guide',   circle:'Circle I — Limbo' },
 };
 
@@ -312,6 +357,13 @@ n_minos: { region:'minos', title:'The Connoisseur of Guilt',
       t+=`\n\n<em>“Alive,”</em> he observes, tail twitching like a critic’s pen. <em>“Beware how you enter, and in whom you trust. The width of the door is no measure of the door.”</em>`;
     }
     if (S.flags.scythe) t+=`\n\nThe great nostrils flare once toward the scythe — and the tail, mid-coil, goes carefully still. <em>“That writ,”</em> Minos says, with the delicacy of a judge addressing a rival court, <em>“is not mine to sentence. Mind how you serve it, bailiff. The blade keeps its own docket.”</em>`;
+    const vd=P.verdicts||{}, vids=Object.keys(vd);
+    if (vids.length){
+      let mercy=0, harm=0;
+      vids.forEach(k=>{ const l=vd[k].last;
+        (l==='condemn'||l==='punish') ? harm++ : mercy++; });
+      t+=`\n\n<em>“Your docket, for the record:”</em> — the tail taps the stone once per count — <em>“${mercy} shown mercy. ${harm} struck. Oh yes, the circles keep minutes, pilgrim. The circles ALWAYS keep minutes.”</em>`;
+    }
     return t;
   },
   choices:[
@@ -346,7 +398,7 @@ n_storm: { region:'lust', title:'The Whirlwind of Lovers',
     { t:'Scream into the wind until it screams back.', sin:{wrath:1}, go:'n_francesca' },
   ]},
 n_francesca: { region:'lust', title:'Francesca', judge:{soul:'s_francesca',go:'n_c2_exit'},
-  text:`They come like doves to the nest, and the storm — this is the unbearable part — the storm <em>waits</em>.\n\nShe speaks; he only weeps. She tells it plainly, the way you’d recite a recipe for the dish that killed you: an afternoon, a book about a knight, a kiss read about and then attempted, her husband’s knife arriving before the next chapter. <em>“Love led us to one death,”</em> she says. <em>“Caïna waits for him who quenched our life.”</em>\n\nThe man weeps on. The storm idles like a hearse.\n\nShe looks at you and waits to hear which kind of visitor you are.`,
+  text:(S,P)=>soulMem(S,P,'s_francesca')+`They come like doves to the nest, and the storm — this is the unbearable part — the storm <em>waits</em>.\n\nShe speaks; he only weeps. She tells it plainly, the way you’d recite a recipe for the dish that killed you: an afternoon, a book about a knight, a kiss read about and then attempted, her husband’s knife arriving before the next chapter. <em>“Love led us to one death,”</em> she says. <em>“Caïna waits for him who quenched our life.”</em>\n\nThe man weeps on. The storm idles like a hearse.\n\nShe looks at you and waits to hear which kind of visitor you are.`,
   choices:[
     { t:'Weep for her. Openly. Let it cost you.', heart:2, go:'n_francesca_weep' },
     { t:'“You chose. The book didn’t kiss anyone.”', heart:-2,
@@ -400,7 +452,7 @@ n_c3_rain: { region:'gluttony', title:'The Rain That Rots',
       sin:{gluttony:2,sloth:1}, end:'e_mire' },
   ]},
 n_ciacco: { region:'gluttony', title:'Ciacco', judge:{soul:'s_ciacco',go:'n_c4_plutus'},
-  text:`One of the sprawled dead sits up — an effort like a continent shrugging — and rain relocates around him.\n\n<em>“You,”</em> he says. <em>“Alive. From the world. Do you know me? I was called Ciacco — ‘the Hog’ — a joke I paid for by becoming it. I knew every table in Florence and none of them knew me back.”</em>\n\nHe leans close. The rain gets into everything, including moments.\n\n<em>“But when thou art again in the sweet world, I pray thee to the mind of others bring me. Say the name. Once a year. At a dinner, even — especially at a dinner. It is all I ask and it is everything.”</em>\n\nThe poet murmurs, beside you: <em>“Three names, {NAME}. A mouth only carries three through this dark. Spend them like your last coins.”</em>`,
+  text:(S,P)=>soulMem(S,P,'s_ciacco')+`One of the sprawled dead sits up — an effort like a continent shrugging — and rain relocates around him.\n\n<em>“You,”</em> he says. <em>“Alive. From the world. Do you know me? I was called Ciacco — ‘the Hog’ — a joke I paid for by becoming it. I knew every table in Florence and none of them knew me back.”</em>\n\nHe leans close. The rain gets into everything, including moments.\n\n<em>“But when thou art again in the sweet world, I pray thee to the mind of others bring me. Say the name. Once a year. At a dinner, even — especially at a dinner. It is all I ask and it is everything.”</em>\n\nThe poet murmurs, beside you: <em>“Three names, {NAME}. A mouth only carries three through this dark. Spend them like your last coins.”</em>`,
   choices:[
     { t:'Weep for him — the joke that became a sentence.', heart:1,
       fx:S=>S.judged.s_ciacco='pity', go:'n_c4_plutus' },
@@ -426,7 +478,7 @@ n_ciacco_prophecy: { region:'gluttony', title:'What the Dead Know',
 n_c4_plutus: { region:'greed', title:'Pape Satàn',
   text:(S,P)=>`<em>“Pape Satàn, pape Satàn, aleppe!”</em> — the thing at the mouth of the fourth circle clucks it like a hen made of money, swollen, blustering, guarding nothing that anyone could carry away.\n\nThe poet says one sentence — something about wolves and the will above — and Plutus collapses like a sail with its rigging cut.\n\nBeyond: two vast half-circles of the dead, each soul chest-rolling a boulder of dead weight, clashing against the opposite tide at the meeting points — <em>“Why hoard?” “Why squander?”</em> — then wheeling around to do it again. Forever. An economy.`+vA(S,P,'greed'),
   choices:[
-    { t:'Watch one full rotation of the wheel. Understand it.', go:'n_c4_watch' },
+    { t:'Watch one full rotation of the wheel. Understand it.', sin:{sloth:1}, go:'n_c4_watch' },
     { t:'“Poet — why do I recognize no one here?”', go:'n_c4_faces' },
     { t:'Walk the rim looking for a soul who’ll speak.', go:'n_miser' },
     { t:'Cross quickly. Money bores you.', go:'n_c5_styx' },
@@ -446,7 +498,7 @@ n_c4_faces: { region:'greed', title:'The Faceless',
     { t:'Move on, and grip your own name a little tighter.', go:'n_c5_styx' },
   ]},
 n_miser: { region:'greed', title:'The Shade Without a Name', judge:{soul:'s_forgotten',go:'n_c5_styx'},
-  text:`He stops when you stand in his path — the first stopping he has done, perhaps, in centuries. The boulder settles into the mud like a verdict.\n\n<em>“You want the name,”</em> he says, before you ask. <em>“They always start with the name. Listen: I had one. I know I had one. I kept it in the same place I kept everything, locked, safe, safe, safe—”</em> his hands work the air like a man counting phantom coins — <em>“and the lock outlived the key. My mother made that name. Two syllables. I bought things with it. It bought me this stone.”</em>\n\nHe looks up, and his face is a smooth worn place, like a coin handled too long.\n\n<em>“Can you lend me nothing? You, with your pockets full of being alive?”</em>`,
+  text:(S,P)=>soulMem(S,P,'s_forgotten')+`He stops when you stand in his path — the first stopping he has done, perhaps, in centuries. The boulder settles into the mud like a verdict.\n\n<em>“You want the name,”</em> he says, before you ask. <em>“They always start with the name. Listen: I had one. I know I had one. I kept it in the same place I kept everything, locked, safe, safe, safe—”</em> his hands work the air like a man counting phantom coins — <em>“and the lock outlived the key. My mother made that name. Two syllables. I bought things with it. It bought me this stone.”</em>\n\nHe looks up, and his face is a smooth worn place, like a coin handled too long.\n\n<em>“Can you lend me nothing? You, with your pockets full of being alive?”</em>`,
   choices:[
     { t:'Weep. A man robbed of his name by his own vault.', heart:1,
       fx:S=>S.judged.s_forgotten='pity', go:'n_c5_styx' },
@@ -473,11 +525,11 @@ n_c5_styx: { region:'styx', title:'The Marsh of the Two Angers',
     { t:'Kneel at the water’s edge and listen to the bubbles.', go:'n_sullen' },
     { t:'Hail the boat.', go:'n_argenti' },
     { t:'Watch the brawl. Feel your own knuckles itch.', sin:{wrath:1}, go:'n_argenti' },
-    { t:'Skip a stone across the marsh. Someone has to.', go:'n_argenti',
+    { t:'Skip a stone across the marsh. Someone has to.', sin:{sloth:1}, go:'n_argenti',
       fx:S=>S.flags.skipped=1 },
   ]},
 n_sullen: { region:'styx', title:'The Sullen One', judge:{soul:'s_sullen',go:'n_argenti'},
-  text:`You kneel in the reek, and against every rule of this place, the bubbles organize. A voice assembles itself from swamp gas and old grievance — a woman’s voice, wrung flat.\n\n<em>“Down here we say it. That’s the punishment, if you’re keeping notes: an eternity of finally saying it. I was sullen in the sweet air. The sun came up every single day and I took it as a personal insult. My sister sang in the mornings. I never asked her to teach me the song. It seemed — ”</em> a long bubble, almost a laugh — <em>“it seemed like admitting something.”</em>\n\nThe mud holds her the way she once held everything: in, and down, and quietly.`,
+  text:(S,P)=>soulMem(S,P,'s_sullen')+`You kneel in the reek, and against every rule of this place, the bubbles organize. A voice assembles itself from swamp gas and old grievance — a woman’s voice, wrung flat.\n\n<em>“Down here we say it. That’s the punishment, if you’re keeping notes: an eternity of finally saying it. I was sullen in the sweet air. The sun came up every single day and I took it as a personal insult. My sister sang in the mornings. I never asked her to teach me the song. It seemed — ”</em> a long bubble, almost a laugh — <em>“it seemed like admitting something.”</em>\n\nThe mud holds her the way she once held everything: in, and down, and quietly.`,
   choices:[
     { t:'Weep for her. Grief that never learned to speak.', heart:1,
       fx:S=>S.judged.s_sullen='pity', go:'n_argenti' },
@@ -532,7 +584,7 @@ n_dis_open: { region:'dis', title:'One From Heaven',
     { t:'Enter the city of the dead.', go:'n_c6_tombs' },
     { t:'Ask the poet if he’s all right. Nobody ever asks him.', virgil:1, go:'n_c6_tombs',
       fx:S=>S.flags.askedOk=1 },
-    { t:'Thank the departing messenger, loudly, to its back.', star:1, go:'n_c6_tombs' },
+    { t:'Thank the departing messenger, loudly, to its back.', go:'n_c6_tombs' },
   ]},
 
 /* ---------------- CIRCLE VI — HERESY ---------------- */
@@ -567,7 +619,7 @@ n_farinata2: { region:'heresy', title:'The Audit of Scorn',
     { t:'Walk on. Some monuments are best read at distance.', go:'n_c7_wood' },
   ]},
 n_cavalcante: { region:'heresy', title:'Cavalcante', judge:{soul:'s_cavalcante',go:'n_cav_after'},
-  text:`The old man’s hands close on the rim of the tomb like a swimmer’s on a gunwale.\n\n<em>“If you walk this blind prison by height of genius — my son had genius, where is he? Why is he not with you? Does the sweet light no longer strike his eyes?”</em>\n\nAnd there it is, the trap with no good exit: you don’t know his son. You don’t know if the boy lives. The father reads your half-second of hesitation the way the dead read everything — instantly, and in the worst light — and begins, already, to fall back into the burning.`,
+  text:(S,P)=>soulMem(S,P,'s_cavalcante')+`The old man’s hands close on the rim of the tomb like a swimmer’s on a gunwale.\n\n<em>“If you walk this blind prison by height of genius — my son had genius, where is he? Why is he not with you? Does the sweet light no longer strike his eyes?”</em>\n\nAnd there it is, the trap with no good exit: you don’t know his son. You don’t know if the boy lives. The father reads your half-second of hesitation the way the dead read everything — instantly, and in the worst light — and begins, already, to fall back into the burning.`,
   choices:[
     { t:'“I don’t know your son. I’m sorry. I don’t know.”', heart:1,
       fx:S=>S.judged.s_cavalcante='question', go:'n_cav_after' },
@@ -605,7 +657,7 @@ n_c7_wood: { region:'wood', title:'The Wood of the Self-Slain',
       sin:{pride:2}, virgil:-1, go:'n_pier', fx:S=>S.flags.carved=1 },
   ]},
 n_pier: { region:'wood', title:'Pier delle Vigne', judge:{soul:'s_pier',go:'n_pier_after'},
-  text:S=>(S.flags.carved?`(The trunk you carved screamed with your own voice, which you will be hearing at odd hours for the rest of your life.)\n\n`:``)
+  text:(S,P)=>soulMem(S,P,'s_pier')+(S.flags.carved?`(The trunk you carved screamed with your own voice, which you will be hearing at odd hours for the rest of your life.)\n\n`:``)
     +`The twig snaps — and the tree bleeds, and the blood talks.\n\n<em>“Why do you tear me? Have you no spirit of pity? Men we were; trunks we have become.”</em>\n\nHe was Pier delle Vigne: keeper of both keys to an emperor’s heart, the most trusted man in the realm — until envy’s whisperers, <em>the harlot Envy and her court</em>, forged his fall. Prison. Blinding. And then the one exit he could still reach, which led here, where those who threw their bodies away are given bodies that cannot move.\n\n<em>“I swear to you,”</em> the bleeding voice says, <em>“I never broke faith with my lord. He was worthy of honor. If either of you returns to the world—”</em> and here the whole tree strains toward you, every thorn a reaching finger — <em>“comfort my memory. It lies fallen still, under the blow that Envy gave it. Tell them I kept faith. Tell them the whispers lied.”</em>`,
   choices:[
     { t:'Weep for the tree that was the emperor’s right hand.', heart:1,
@@ -777,7 +829,7 @@ n_demon_march: { region:'malebolge', title:'The Complimentary Escort',
     { t:'Turn back up the bank to file a complaint.', sin:{wrath:2}, end:'e_pitch' },
   ]},
 n_ulysses: { region:'malebolge', title:'The Horned Flame', judge:{soul:'s_ulysses',go:'n_ulysses_offer'},
-  text:S=>(S.flags.thankedSlide?`(He looked at your hands on his shoulders like artifacts from a lost civilization. <em>“Yes. Well,”</em> he said, and reorganized his dignity. But he walked differently after — the walk of a man whose catch was witnessed.)\n\n`:``)
+  text:(S,P)=>soulMem(S,P,'s_ulysses')+(S.flags.thankedSlide?`(He looked at your hands on his shoulders like artifacts from a lost civilization. <em>“Yes. Well,”</em> he said, and reorganized his dignity. But he walked differently after — the walk of a man whose catch was witnessed.)\n\n`:``)
     +`The eighth ditch holds fire in flakes — each flame a soul, walking its trench like a thought being reworded forever. And one flame is horned, split in two tongues, and the greater horn bends toward you before anyone summons it.\n\n<em>“Living voice,”</em> it says, in a tone that commanded ships. <em>“I know the sound. I spent it all.”</em>\n\nUlysses. The man who talked the Trojan Horse into being, who talked a decade of war into legend — and who, gone gray, docked at home for one winter, then talked one last crew past the edge of every map: <em>neither fondness for my son, nor reverence for my aged father, nor the due love that should have gladdened Penelope, could conquer in me the ardour that I had to gain experience of the world.</em> Five months past the pillars of the permitted, a mountain rose from the sea — and the sea, on instructions, closed over them.\n\n<em>“I told my old men something, that last morning, to make them row past the edge. Would you like to hear it? Everyone down here has heard it. The demons request it at parties.”</em>`,
   choices:[
     { t:'“Say it.”', learnVerse:'v_brutes', fx:S=>S.judged.s_ulysses='question',
@@ -845,7 +897,7 @@ n_c9_walk: { region:'ice', title:'Two in One Hole',
       go:'n_ugolino_tale', fx:S=>S.flags.sorrowKey=1 },
   ]},
 n_ugolino: { region:'ice', title:'The Gnawing',
-  text:`He considers your question with his mouth still resting against the skull, the way a man rests a hand on a gate he is thinking of going through again.\n\n<em>“You ask me to renew a desperate grief,”</em> he says at last, <em>“that crushes my heart merely in the thinking, before I speak. No.”</em>\n\nHe returns to the skull. The sound resumes. The ice creaks its ledger-creak, and the interview appears to be over — unless you happen to be carrying the one coin this particular toll-gate takes: a verse about sorrow, minted two circles up, by a lady in a storm.`,
+  text:(S,P)=>soulMem(S,P,'s_ugolino')+`He considers your question with his mouth still resting against the skull, the way a man rests a hand on a gate he is thinking of going through again.\n\n<em>“You ask me to renew a desperate grief,”</em> he says at last, <em>“that crushes my heart merely in the thinking, before I speak. No.”</em>\n\nHe returns to the skull. The sound resumes. The ice creaks its ledger-creak, and the interview appears to be over — unless you happen to be carrying the one coin this particular toll-gate takes: a verse about sorrow, minted two circles up, by a lady in a storm.`,
   choices:[
     { pre:'speak the verse', verse:'v_sorrow',
       t:'“‘No greater sorrow than to be mindful of the happy time in misery.’ She weeps it in the whirlwind, sir. Trade me grief for grief.”',
@@ -947,6 +999,8 @@ n_exit: { region:'lucifer', motif:'s_virgil', title:'The Burrow at the Bottom of
         const iv=['v_midway','v_gate','v_hope','v_sorrow','v_brutes','v_stars'];
         if (iv.every(v=>S.verses.includes(v))) return 'e_poet';
         return 'e_stars'; } },
+    { pre:'the way up', t:'The burrow forks — and the second mouth breathes dawn. The road you opened once stands open forever.',
+      req:(S,P)=>P.witness.includes('s_virgil'), go:'n_purgatorio' },
     { t:'Embrace the poet first. Rules of Limbo be damned.',
       virgil:1, heart:1, fx:S=>S.flags.hugged=1,
       go:'n_exit2' },
@@ -967,6 +1021,8 @@ n_exit2: { region:'lucifer', motif:'s_virgil', title:'The Threshold',
     { pre:'the ninth name', t:'Turn back to the poet. There is a name still unspoken.',
       req:(S,P)=>S.flags.marks>=8 && !S.names.includes('s_virgil') && !P.witness.includes('s_virgil'),
       remember:'s_virgil', virgil:2, go:'n_purgatorio' },
+    { pre:'the way up', t:'Take the second mouth of the burrow — the one that breathes dawn. The road you opened once stands open forever.',
+      req:(S,P)=>P.witness.includes('s_virgil'), go:'n_purgatorio' },
   ]},
 
 /* ---------------- PURGATORIO (true-ending path) ---------------- */
@@ -1024,7 +1080,7 @@ n_beatrice_verdict: { region:'beatrice', title:'The Weighing',
   text:`The dawn holds still for it.`,
   choices:[
     { t:'…', go:null,
-      end:S=> S.heart<=-3 ? 'e_beatrice_stone' : S.heart>=4 ? 'e_beatrice_flood' : 'e_beatrice_clear' },
+      end:S=> S.heart<=-4 ? 'e_beatrice_stone' : S.heart>=5 ? 'e_beatrice_flood' : 'e_beatrice_clear' },
   ]},
 
 /* ---------------- RITE INTERLUDE (absolve / punish, engine-injected) --- */

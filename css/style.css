@@ -195,6 +195,26 @@ kbd{border:1px solid var(--gold-dim);border-radius:3px;padding:0 4px;font-family
   animation:kenburns 55s ease-in-out infinite alternate}
 #title-screen .title-inner{background:radial-gradient(ellipse 90% 90% at 50% 45%,#00000088,transparent)}
 
+/* ---------- hell remembers ---------- */
+.mem{display:block;font-style:italic;color:#b8ab93;border-left:2px solid var(--gold-dim);
+  padding:2px 0 2px 14px;margin-bottom:4px}
+.run-row{display:flex;align-items:baseline;gap:10px;padding:7px 10px;margin:4px 0;
+  border:1px solid #2a241c;font-size:13px;text-align:left}
+.run-row b{font-weight:400;color:var(--bone)}
+.run-row.k-death b{color:#c99a8a}.run-row.k-exit b{color:var(--gold)}
+.run-row.k-true b{color:var(--ice)}
+.rr-n{color:#5a5040;font-size:11px;min-width:18px}
+.rr-meta{color:var(--bone-dim);font-size:11.5px;flex:1}
+.rr-dots{letter-spacing:.3em;font-size:12px}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce){
+  .scene-img,#title-hero-img,.title-ring{animation:none!important}
+  .ember,.atmo .fogx{display:none}
+  .para,#choices.late{animation-duration:.01s!important;animation-delay:0s!important}
+  #game-screen.descending #scene-wrap::before{display:none}
+}
+
 /* ---------- delights: descent veil, unfurl, title wall, toast ---------- */
 #game-screen.descending #scene-wrap::before{content:'';position:absolute;left:0;right:0;
   top:-30%;height:160%;z-index:30;pointer-events:none;

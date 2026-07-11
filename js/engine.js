@@ -15,11 +15,13 @@ function loadP(){
   try{ const p=JSON.parse(localStorage.getItem(K_PERSIST)); if(p) return p; }catch(e){}
   return { runs:0, endings:{}, witness:[], residue:{}, lastEnding:null,
     lastEndingTitle:null, playerName:'', versesFound:[], deepest:0,
-    fx:{tw:1,music:1,sfx:1} };
+    fx:{tw:1,music:1,sfx:1}, verdicts:{}, runsLog:[] };
 }
 function saveP(){ localStorage.setItem(K_PERSIST, JSON.stringify(P)); }
 let P = loadP();
 P.fx = P.fx || {tw:1,music:1,sfx:1};
+P.verdicts = P.verdicts || {};
+P.runsLog = P.runsLog || [];
 AUDIO.setPrefs(P.fx.music, P.fx.sfx);
 let toastTimer=null;
 function toast(msg){
@@ -31,10 +33,12 @@ function toast(msg){
 
 /* ---------------- run state ---------------- */
 function newRun(name){
+  // her light remembers you: the true ending leaves one candle permanently lit
+  const graced = !!(P.endings && P.endings['e_beatrice_clear']);
   return { name:name||P.playerName||'Pilgrim', node:'n_wake',
     sins:{pride:0,envy:0,wrath:0,sloth:0,greed:0,gluttony:0,lust:0},
-    heart:0, virgil:3, star:4, names:[], verses:[], flags:{}, judged:{},
-    absolved:0, punished:0 };
+    heart:0, virgil:3, star:graced?5:4, names:[], verses:[], flags:{}, judged:{},
+    absolved:0, punished:0, memory:JSON.parse(JSON.stringify(P.verdicts||{})) };
 }
 let S=null;
 let lastDepth=null;
@@ -110,7 +114,8 @@ function titleScreen(){
     const r=STORY.helpers.domRes(P);
     res.innerHTML = (P.lastEndingTitle?`Minos remembers: last time it ended with “${P.lastEndingTitle}.”`:'Minos remembers you.')
       + (r?`<br>Your ledger still smells of ${STORY.helpers.SIN_WORD[r]}.`:'')
-      + (P.witness.length?`<br>${P.witness.length} of 9 names stand on the Witness Wall.`:'');
+      + (P.witness.length?`<br>${P.witness.length} of 9 names stand on the Witness Wall.`:'')
+      + (P.endings['e_beatrice_clear']?`<br><span style="color:#9fb8c8">Her light remembers you: every descent begins with a candle already lit.</span>`:'');
   } else res.textContent='';
 }
 $('btn-begin').onclick=()=>{ $('name-input').value=P.playerName||''; show('name-screen');
@@ -188,10 +193,21 @@ $('btn-tapestry').onclick=()=>{
   for(let i=0;i<r.verses.length;i++)
     svg+=`<line x1="${170+i*10}" y1="480" x2="${168+i*10}" y2="${506+(i%2)*8}" stroke="#c9a35c" stroke-width="1.5" opacity=".8"/>`;
   svg+=`</svg>`;
+  const verbGlyph={remember:['◈','#c9a35c'],pity:['○','#7d94a8'],condemn:['✕','#7e2020'],
+    question:['?','#8a8474'],absolve:['✧','#e8e2c8'],punish:['†','#c4552a']};
+  const rows=(P.runsLog||[]).slice().reverse().map((L,ix)=>{
+    const e2=ENDINGS[L.ending]||{title:L.ending,kind:'death'};
+    const dots=Object.values(L.judged||{}).map(v=>{const g=verbGlyph[v]||['·','#666'];
+      return `<span style="color:${g[1]}" title="${v}">${g[0]}</span>`;}).join(' ');
+    return `<div class="run-row k-${e2.kind}"><span class="rr-n">${P.runsLog.length-ix}</span>`
+      +`<b>${e2.title}</b><span class="rr-meta">${L.name}${L.dom?' · '+L.dom:''}${L.scythe?' · ⚚':''}`
+      +` · ${L.names} name${L.names===1?'':'s'}</span><span class="rr-dots">${dots}</span></div>`;
+  }).join('');
   gallery('The Tapestry of '+r.name,
     `The last descent, woven: warp of sins, weft of judgments — ended in “${ENDINGS[r.ending].title}.” `
     +`${r.absolved?r.absolved+' absolved. ':''}${r.punished?r.punished+' punished. ':''}${r.verses.length} verses carried.`,
-    `<div style="display:flex;justify-content:center">${svg}</div>`);
+    `<div style="display:flex;justify-content:center">${svg}</div>`
+    +(rows?`<div class="gallery-sub" style="margin:16px 0 4px">every descent, archived</div>${rows}`:''));
 };
 
 /* ---------------- depth rail — the Funnel of Hell ---------------- */
@@ -227,8 +243,10 @@ function paintRail(depth, seen){
     s+=`<text x="${50+w+7}" y="${y+4.5}" font-size="13"
       fill="${cur?'#c9a35c':vis?'#8a8474':'#3a3328'}" font-family="Georgia">${rom[i]}</text>`;
     if (cur && !out){
+      const graced=!!(P.endings && P.endings['e_beatrice_clear']);
       s+=`<g class="rail-marker" transform="translate(50,${y})">
         <path d="M0,-9 q-3.6,4.5 0,9 q3.6,-4.5 0,-9 z" fill="#e8dfd0"/>
+        ${graced?`<circle r="6.5" fill="none" stroke="#cfe4ee" stroke-width=".8" opacity=".8"/>`:''}
         <circle r="12" fill="none" stroke="#c9a35c" stroke-width="1">
           <animate attributeName="r" values="9;14;9" dur="2.4s" repeatCount="indefinite"/>
           <animate attributeName="opacity" values=".7;.15;.7" dur="2.4s" repeatCount="indefinite"/>
@@ -416,6 +434,10 @@ function choose(c){
   if (c.remember && !S.names.includes(c.remember) && S.names.length<3){
     S.names.push(c.remember); AUDIO.sting('remember'); }
   if (c.fx) c.fx(S,P);
+  // any verse in hand is a verse in the codex (fx-granted ones included)
+  let vSync=false;
+  S.verses.forEach(v=>{ if(!P.versesFound.includes(v)){P.versesFound.push(v);vSync=true;} });
+  if (vSync) saveP();
   const jKeys=Object.keys(S.judged);
   if (jKeys.length>jCount){
     const v=S.judged[jKeys[jKeys.length-1]];
@@ -444,6 +466,15 @@ function ending(id){
     judged:{...S.judged}, names:[...S.names], verses:[...S.verses],
     scythe:!!S.flags.scythe, absolved:S.absolved||0, punished:S.punished||0,
     heart:S.heart, star:S.star };
+  // Hell remembers: verdicts persist, and every descent is archived
+  for (const s in S.judged){
+    const rec=P.verdicts[s]||{n:0};
+    rec.last=S.judged[s]; rec.n++; P.verdicts[s]=rec;
+  }
+  P.runsLog.push({ name:S.name, ending:id, kind:e.kind,
+    dom:STORY.helpers.domSin(S), judged:{...S.judged},
+    names:S.names.length, scythe:!!S.flags.scythe });
+  if (P.runsLog.length>40) P.runsLog.shift();
   let inscribeMsg='';
   // e_trade: the one contract Hell honors — names inscribe even though you stay
   const escaped = ((e.kind==='exit'||e.kind==='true') && id!=='e_falsestars') || id==='e_trade';
