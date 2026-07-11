@@ -12,7 +12,19 @@ const $=id=>document.getElementById(id);
 
 /* ---------------- persistent state ---------------- */
 function loadP(){
-  try{ const p=JSON.parse(localStorage.getItem(K_PERSIST)); if(p) return p; }catch(e){}
+  try{
+    const p=JSON.parse(localStorage.getItem(K_PERSIST));
+    if (p && typeof p==='object'){
+      // migration guards: any future field gets a default; bad shapes get repaired
+      if (typeof p.runs!=='number') p.runs=0;
+      if (!p.endings||typeof p.endings!=='object') p.endings={};
+      if (!Array.isArray(p.witness)) p.witness=[];
+      if (!p.residue||typeof p.residue!=='object') p.residue={};
+      if (!Array.isArray(p.versesFound)) p.versesFound=[];
+      if (typeof p.deepest!=='number') p.deepest=0;
+      return p;
+    }
+  }catch(e){}
   return { runs:0, endings:{}, witness:[], residue:{}, lastEnding:null,
     lastEndingTitle:null, playerName:'', versesFound:[], deepest:0,
     fx:{tw:1,music:1,sfx:1}, verdicts:{}, runsLog:[] };
@@ -46,7 +58,22 @@ let lastDepth=null;
 let curRegion=null;
 function saveRun(){ if(S) localStorage.setItem(K_RUN, JSON.stringify(S)); }
 function clearRun(){ localStorage.removeItem(K_RUN); }
-function loadRun(){ try{ return JSON.parse(localStorage.getItem(K_RUN)); }catch(e){ return null; } }
+function loadRun(){
+  try{
+    const r=JSON.parse(localStorage.getItem(K_RUN));
+    // a saved run only survives if its node still exists; missing fields
+    // are back-filled from a fresh run so old saves never brick an update
+    if (!r || typeof r!=='object' || !r.node || !NODES[r.node]) return null;
+    const d=newRun(r.name);
+    for (const k in d) if (r[k]===undefined) r[k]=d[k];
+    r.sins=Object.assign({pride:0,envy:0,wrath:0,sloth:0,greed:0,gluttony:0,lust:0},r.sins||{});
+    r.flags=r.flags||{}; r.judged=r.judged||{};
+    if (!Array.isArray(r.names)) r.names=[];
+    if (!Array.isArray(r.verses)) r.verses=[];
+    if (!Array.isArray(r.prayers)) r.prayers=[];
+    return r;
+  }catch(e){ return null; }
+}
 
 /* ---------------- helpers ---------------- */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -521,6 +548,16 @@ function render(nodeId){
   }
   box.classList.toggle('late', !!P.fx.tw);
   box.style.animationDelay = P.fx.tw ? (Math.min(paras,8)*150+250)+'ms' : '0ms';
+  // preload the art of wherever the choices can lead, so transitions never pop
+  const pre=new Set();
+  (n.choices||[]).forEach(c=>{
+    if (typeof c.go==='string' && NODES[c.go]){
+      const rk=NODES[c.go].region;
+      if (typeof rk==='string' && rk!==regKey) pre.add('scenes/'+rk);
+    }
+    if (typeof c.end==='string') pre.add('endings/'+c.end);
+  });
+  pre.forEach(p=>{ const im=new Image(); im.src=`${IMG_ROOT}/${p}.jpg`; });
   const gs=$('game-screen'); gs.classList.remove('fade-in'); void gs.offsetWidth;
   gs.classList.add('fade-in');
   $('text-panel').scrollTop=0;
@@ -636,6 +673,7 @@ function debugPanel(){
   <div class="dbg-row"><button id="dbg-apply">apply stats</button> <button id="dbg-verses">all verses</button></div>
   <div class="dbg-row"><button id="dbg-marks">8 witness marks</button> <button id="dbg-wipe">WIPE ALL</button></div>
   <div class="dbg-row"><button id="dbg-scythe">give scythe</button> <button id="dbg-rites">absolved 4 / punished 3</button></div>
+  <div class="dbg-row">pace <input id="dbg-pace" size="2" value="0"> burdens <input id="dbg-burden" size="1" value="2"> <button id="dbg-asc">set</button> <button id="dbg-perfect">ascent perfect</button></div>
   <div class="dbg-row">P: runs ${P.runs} · witness ${P.witness.length}/9 · endings ${Object.keys(P.endings).length}/${Object.keys(ENDINGS).length}</div>`;
   $('dbg-go').onclick=()=>{ if(!S){S=newRun(P.playerName);show('game-screen');}
     render($('dbg-node').value); };
@@ -652,6 +690,17 @@ function debugPanel(){
     P=loadP(); S=null; d.classList.add('hidden'); titleScreen(); };
   $('dbg-scythe').onclick=()=>{ if(!S)return; S.flags.scythe=1; render(S.node); };
   $('dbg-rites').onclick=()=>{ if(!S)return; S.absolved=4; S.punished=3; render(S.node); };
+  $('dbg-asc').onclick=()=>{ if(!S)return;
+    const pv=+$('dbg-pace').value||0, bv=+$('dbg-burden').value||0;
+    S.pace=clamp(pv,-8,8);
+    S.burdens=S.burdens||{}; S.ps=S.ps||{};
+    SINS.forEach(k=>S.burdens[k]=clamp(bv,0,6));
+    render(S.node); };
+  $('dbg-perfect').onclick=()=>{ if(!S)return;
+    S.act='purgatorio'; S.pace=0; S.sirenTaken=0; S.heart=0;
+    S.ps={}; S.burdens={}; SINS.forEach(k=>{S.ps[k]=1;S.burdens[k]=0;});
+    S.prayers=['pr_manfred','pr_pia','pr_oderisi','pr_sapia','pr_marco'];
+    render(S.node); };
 }
 // click the panel to finish the unfurl instantly
 $('text-panel').addEventListener('click',e=>{
