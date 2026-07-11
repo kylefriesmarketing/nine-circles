@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NINE CIRCLES — a descent</title>
+<meta name="description" content="A branching descent through Dante's Inferno. Carry three names. Keep the star lit. Feel it, and walk on.">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23c9a35c' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%23c9a35c' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23c9a35c'/%3E%3C/svg%3E">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== TITLE SCREEN ===== -->
+  <div id="title-screen" class="screen">
+    <div id="title-art"></div>
+    <div class="title-inner">
+      <div class="title-eyebrow" id="title-eyebrow">nel mezzo del cammin di nostra vita</div>
+      <h1 class="game-title">NINE<span class="title-ring">&#9678;</span>CIRCLES</h1>
+      <div class="title-sub">a descent</div>
+      <div id="title-residue" class="title-residue"></div>
+      <div class="title-menu">
+        <button id="btn-begin" class="menu-btn">Begin the Descent</button>
+        <button id="btn-continue" class="menu-btn hidden">Continue the Descent</button>
+        <button id="btn-witness" class="menu-btn small">The Witness Wall</button>
+        <button id="btn-endings" class="menu-btn small">Cantos You Ended</button>
+        <button id="btn-verses" class="menu-btn small">The Gathered Verses</button>
+        <button id="btn-tapestry" class="menu-btn small">The Tapestry</button>
+      </div>
+      <div class="title-foot">adapted from Dante Alighieri &middot; tr. H.&#8202;W. Longfellow (1867) &middot; press <kbd>~</kbd> for the debug lantern</div>
+    </div>
+  </div>
+
+  <!-- ===== GALLERY OVERLAYS ===== -->
+  <div id="gallery" class="screen overlay hidden">
+    <div class="gallery-box">
+      <h2 id="gallery-title"></h2>
+      <div id="gallery-body"></div>
+      <button id="gallery-close" class="menu-btn small">Return</button>
+    </div>
+  </div>
+
+  <!-- ===== NAME ENTRY ===== -->
+  <div id="name-screen" class="screen overlay hidden">
+    <div class="name-box">
+      <p>Something in the dark asks — not unkindly —</p>
+      <h2>who walks here?</h2>
+      <input id="name-input" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Pilgrim">
+      <button id="name-go" class="menu-btn">That is my name</button>
+    </div>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="game-screen" class="screen hidden">
+    <div id="depth-rail" title="the descent"></div>
+    <div id="game-main">
+      <div id="scene-wrap"><div id="scene-art"></div>
+        <div id="hud"></div>
+      </div>
+      <div id="text-panel">
+        <div id="region-name"></div>
+        <div id="node-title"></div>
+        <div id="node-text"></div>
+        <div id="choices"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ENDING SCREEN ===== -->
+  <div id="ending-screen" class="screen hidden">
+    <div id="ending-art"></div>
+    <div class="ending-inner">
+      <div id="ending-kind"></div>
+      <h2 id="ending-title"></h2>
+      <div id="ending-text"></div>
+      <div id="ending-inscribe"></div>
+      <button id="btn-again" class="menu-btn">Return to the Dark Wood</button>
+    </div>
+  </div>
+
+  <!-- ===== DEBUG ===== -->
+  <div id="debug-panel" class="hidden"></div>
+</div>
+
+<script src="js/storyData.js"></script>
+<script src="js/art.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/engine.js"></script>
+</body>
+</html>
