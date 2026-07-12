@@ -240,6 +240,102 @@ kbd{border:1px solid var(--gold-dim);border-radius:3px;padding:0 4px;font-family
   opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
 
+/* ---------- act theming: the UI ascends with you ---------- */
+[data-act="purgatorio"] #text-panel{
+  background:linear-gradient(180deg,#141a26c8,#0e1420ef);border-color:#d8b86a44}
+[data-act="purgatorio"] #region-name{color:#b89a5c}
+[data-act="purgatorio"] #node-title::after{background:linear-gradient(90deg,transparent,#d8b86a,transparent)}
+[data-act="purgatorio"] .choice:hover{border-color:#e8cc8a;background:#d8b86a14}
+[data-act="purgatorio"] #hud{background:linear-gradient(160deg,#1a2030e0,#0c1018e0);border-color:#d8b86a4d}
+[data-act="purgatorio"] .mem{border-left-color:#b89a5c}
+[data-act="paradiso"] #text-panel{
+  background:linear-gradient(180deg,#f8f2e4e8,#f2e8d2f2);border-color:#b8985a66;
+  box-shadow:0 10px 44px #8a6f3e33;scrollbar-color:#b8985a transparent}
+[data-act="paradiso"] #text-panel::-webkit-scrollbar-thumb{background:#c8ac74}
+[data-act="paradiso"] #node-text{color:#4a3f2c}
+[data-act="paradiso"] #node-text em,[data-act="paradiso"] .speech{color:#6a552e}
+[data-act="paradiso"] #node-title{color:#5a4a2c}
+[data-act="paradiso"] #region-name{color:#a5843e}
+[data-act="paradiso"] #node-title::after{background:linear-gradient(90deg,transparent,#b8985a,transparent)}
+[data-act="paradiso"] #node-text.dropcap::first-letter{color:#a5843e}
+[data-act="paradiso"] .choice{background:#ffffff66;border-color:#b8985a55;color:#4a3f2c}
+[data-act="paradiso"] .choice:hover{border-color:#a5843e;background:#fff8;color:#3a3020;
+  box-shadow:0 0 14px #d8b86a55}
+[data-act="paradiso"] .choice .c-pre{color:#a5843e}
+[data-act="paradiso"] #hud{background:linear-gradient(160deg,#faf4e6e6,#f0e6d0e6);
+  border-color:#b8985a66;box-shadow:inset 0 0 18px #b8985a22,0 2px 12px #8a6f3e33}
+[data-act="paradiso"] #depth-rail{background:linear-gradient(90deg,#f4eeE0d0,#f4eee000);
+  border-right-color:#b8985a44}
+[data-act="paradiso"] .scene-grade{background:linear-gradient(180deg,#fff2 0,transparent 22%,transparent 55%,#f2e8d2a8 100%)}
+[data-act="paradiso"] #scene-wrap::after{border-color:#b8985a3d}
+[data-act="paradiso"] .verse-quote{color:#a5843e}
+
+/* rising-light transition (the ascent's answer to the descent veil) */
+#game-screen.ascending #scene-wrap::before{content:'';position:absolute;left:0;right:0;
+  top:-30%;height:160%;z-index:30;pointer-events:none;
+  background:linear-gradient(0deg,transparent,#fff8ec 32%,#fff8ecdd 62%,transparent);
+  animation:lightrise .95s ease-out forwards}
+@keyframes lightrise{from{transform:translateY(105%)}to{transform:translateY(-105%)}}
+
+/* particles v2 */
+.petal{position:absolute;top:-12px;border-radius:60% 40% 55% 45%;pointer-events:none;
+  animation:petalfall linear infinite}
+@keyframes petalfall{
+  0%{transform:translate(0,-4vh) rotate(0deg);opacity:0}
+  10%{opacity:var(--po,.8)}
+  100%{transform:translate(var(--px,30px),108vh) rotate(var(--pr,300deg));opacity:.15}}
+.mote{position:absolute;bottom:-10px;border-radius:50%;pointer-events:none;
+  filter:blur(1px);animation:moterise linear infinite}
+@keyframes moterise{
+  0%{transform:translate(0,0) scale(.8);opacity:0}
+  12%{opacity:var(--mo,.6)}
+  100%{transform:translate(var(--mx,10px),-108vh) scale(1.15);opacity:0}}
+
+/* choice hotkeys + entrance */
+.choice{counter-increment:choicenum}
+.choice .hotkey{position:absolute;top:6px;right:8px;font-size:9px;color:#8a7a5c66;
+  letter-spacing:0;opacity:0;transition:opacity .2s}
+.choice:hover .hotkey{opacity:1}
+#text-panel{animation:panelin .5s ease-out}
+@keyframes panelin{from{opacity:0;transform:translateX(-50%) translateY(14px)}
+  to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* title: gold-leaf lettering + act slideshow + act glyph buttons */
+.game-title{background:linear-gradient(178deg,#f4ead2 20%,#e0c078 48%,#a5843e 62%,#e8d4a0 78%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 14px #00000088)}
+.title-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+.title-slide.s2{animation:slidecycle 42s ease-in-out infinite 14s}
+.title-slide.s3{animation:slidecycle 42s ease-in-out infinite 28s}
+@keyframes slidecycle{0%,66%,100%{opacity:0}8%,25%{opacity:1}33%{opacity:0}}
+#btn-begin::before{content:'▼  ';color:var(--ember)}
+#btn-ascent::before{content:'▲  ';color:#d8b86a}
+#btn-ascent:hover{border-color:#e8cc8a;color:#e8cc8a}
+#btn-rose::before{content:'✿  ';color:#f0e0b0}
+#btn-rose:hover{border-color:#f4ead2;color:#f4ead2;box-shadow:0 0 22px #f4ead233}
+
+/* ending screen: bloom for the true kind, staggered epilogues */
+#ending-screen[data-kind="true"] .ending-inner{border-color:#e8d4a066;
+  box-shadow:0 0 80px #e8d4a044,inset 0 0 40px #e8d4a011}
+#ending-screen[data-kind="true"]::before{content:'';position:absolute;inset:-20%;
+  background:radial-gradient(circle at 50% 45%,#f4ead233,transparent 55%);
+  animation:bloom 6s ease-in-out infinite alternate;pointer-events:none}
+@keyframes bloom{from{opacity:.5;transform:scale(1)}to{opacity:1;transform:scale(1.08)}}
+#ending-screen[data-kind="exit"] .ending-inner{border-color:#c9a35c55}
+.epi-line{opacity:0;animation:parain .7s ease forwards}
+.epi-line:nth-child(2){animation-delay:.15s}.epi-line:nth-child(3){animation-delay:.3s}
+.epi-line:nth-child(4){animation-delay:.45s}.epi-line:nth-child(5){animation-delay:.6s}
+.epi-line:nth-child(6){animation-delay:.75s}.epi-line:nth-child(7){animation-delay:.9s}
+.epi-line:nth-child(8){animation-delay:1.05s}.epi-line:nth-child(9){animation-delay:1.2s}
+
+/* galleries: hover zoom, act sections */
+.ending-cell{transition:transform .2s,box-shadow .2s;background-size:cover}
+.ending-cell:not(.locked):hover{transform:scale(1.06);box-shadow:0 4px 18px #000a;z-index:2}
+.act-head{grid-column:1/-1;font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+  color:var(--gold-dim);margin:10px 0 2px;text-align:center}
+.witness-slot.lit img.medallion{animation:medpulse 4s ease-in-out infinite}
+@keyframes medpulse{0%,100%{box-shadow:0 0 14px #c9a35c44}50%{box-shadow:0 0 22px #c9a35c77}}
+
 /* fades */
 .fade-out{animation:fadeout .45s forwards}
 .fade-in{animation:fadein .55s}

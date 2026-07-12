@@ -107,11 +107,24 @@ function sceneLayers(container, kind, key, opts={}){
     +(opts.grade!==false?`<div class="scene-grade"></div>`:''));
 }
 function particles(region){
-  const cold=['ice','lucifer','stars'].includes(region);
-  const holy=['beatrice','purgatorio','limbo'].includes(region);
+  const petals=['eden','pageant','lethe','venus'].includes(region);
+  const radiant=['moon','sunfire','mars','jupiter','saturn','rose','pgate'].includes(region);
+  const cold=['ice','lucifer','stars','pnight'].includes(region);
+  const holy=['beatrice','purgatorio','limbo','t_sloth'].includes(region);
+  let s='';
+  if (petals){
+    const cols=['#f0d8e0','#f6ecd0','#e8f0e0','#f4e2d8'];
+    for(let i=0;i<12;i++){ const sz=(4+Math.random()*6).toFixed(1);
+      s+=`<span class="petal" style="left:${(Math.random()*100).toFixed(1)}%;width:${sz}px;height:${(sz*.7).toFixed(1)}px;background:${cols[i%4]};--po:${(.5+Math.random()*.4).toFixed(2)};--px:${(Math.random()*140-70).toFixed(0)}px;--pr:${(180+Math.random()*400).toFixed(0)}deg;animation-duration:${(9+Math.random()*10).toFixed(1)}s;animation-delay:-${(Math.random()*16).toFixed(1)}s"></span>`;}
+    return s;
+  }
+  if (radiant){
+    for(let i=0;i<11;i++){ const sz=(2.5+Math.random()*4).toFixed(1);
+      s+=`<span class="mote" style="left:${(Math.random()*100).toFixed(1)}%;width:${sz}px;height:${sz}px;background:#f8ecc8;--mo:${(.3+Math.random()*.4).toFixed(2)};--mx:${(Math.random()*60-30).toFixed(0)}px;animation-duration:${(14+Math.random()*12).toFixed(1)}s;animation-delay:-${(Math.random()*20).toFixed(1)}s;box-shadow:0 0 ${(6+Math.random()*8).toFixed(0)}px #f4dfa0"></span>`;}
+    return s;
+  }
   const col= cold?'#cfe4ee' : holy?'#e8d9a8' : '#e0703a';
   const n= cold?10 : 14;
-  let s='';
   for(let i=0;i<n;i++){ const sz=(1+Math.random()*2.4).toFixed(1);
     s+=`<span class="ember" style="left:${(Math.random()*100).toFixed(1)}%;width:${sz}px;height:${sz}px;background:${col};--eo:${(.25+Math.random()*.5).toFixed(2)};--ex:${(Math.random()*90-45).toFixed(0)}px;--eh:${(180+Math.random()*260).toFixed(0)}px;animation-duration:${(6+Math.random()*9).toFixed(1)}s;animation-delay:-${(Math.random()*12).toFixed(1)}s;box-shadow:0 0 ${(3+Math.random()*5).toFixed(0)}px ${col}"></span>`;}
   return s;
@@ -125,10 +138,18 @@ function show(id){ ['title-screen','game-screen','ending-screen','name-screen','
 function titleScreen(){
   show('title-screen');
   lastDepth=null;
+  $('app').dataset.act='inferno';
   AUDIO.setScene('title',0,3,null);
   ART.paint($('title-art'),'title','run'+P.runs);
+  const slides = P.endings['pe_paradiso']
+    ? `<img class="title-slide s2" src="${IMG_ROOT}/scenes/purgatorio.jpg" alt="" onerror="this.remove()">`
+      +`<img class="title-slide s3" src="${IMG_ROOT}/scenes/rose.jpg" alt="" onerror="this.remove()">`
+    : P.witness.includes('s_virgil')
+    ? `<img class="title-slide s2" src="${IMG_ROOT}/scenes/purgatorio.jpg" alt="" onerror="this.remove()">`
+    : '';
   $('title-art').insertAdjacentHTML('beforeend',
     `<img id="title-hero-img" src="${IMG_ROOT}/ui/title-hero.jpg" alt="" onerror="this.remove()">`
+    +slides
     +`<div class="atmo"><div class="fogx"></div>${particles('gate')}</div>`);
   const order=['s_francesca','s_ciacco','s_forgotten','s_sullen','s_cavalcante',
     's_pier','s_ulysses','s_ugolino','s_virgil'];
@@ -177,13 +198,18 @@ $('gallery-close').onclick=titleScreen;
 $('btn-endings').onclick=()=>{
   const ids=Object.keys(ENDINGS);
   const found=ids.filter(i=>P.endings[i]).length;
+  const cell=i=>{ const e=ENDINGS[i];
+    return P.endings[i]
+      ? `<div class="ending-cell k-${e.kind}" style="background:linear-gradient(180deg,#0b0a09b0,#0b0a09e8),url('assets/endings/${i}.jpg') center/cover"><span class="ek">${e.kind}</span>${e.title}<span style="opacity:.6;font-size:10px">×${P.endings[i]}</span></div>`
+      : `<div class="ending-cell locked">?</div>`; };
+  const act1=ids.filter(i=>i.startsWith('e_')), act2=ids.filter(i=>i.startsWith('pe_')),
+        act3=ids.filter(i=>i.startsWith('pa_'));
   gallery('Cantos You Ended', `${found} of ${ids.length} endings witnessed`,
-    `<div class="ending-grid">`+ids.map(i=>{
-      const e=ENDINGS[i];
-      return P.endings[i]
-        ? `<div class="ending-cell k-${e.kind}" style="background:linear-gradient(180deg,#0b0a09b0,#0b0a09e8),url('assets/endings/${i}.jpg') center/cover"><span class="ek">${e.kind}</span>${e.title}<span style="opacity:.6;font-size:10px">×${P.endings[i]}</span></div>`
-        : `<div class="ending-cell locked">?</div>`;
-    }).join('')+`</div>`);
+    `<div class="ending-grid">`
+    +`<div class="act-head">act i — the descent</div>`+act1.map(cell).join('')
+    +`<div class="act-head">act ii — the mountain</div>`+act2.map(cell).join('')
+    +`<div class="act-head">act iii — the spheres</div>`+act3.map(cell).join('')
+    +`</div>`);
 };
 $('btn-witness').onclick=()=>{
   const order=['s_virgil','s_francesca','s_ciacco','s_forgotten','s_sullen',
@@ -515,15 +541,24 @@ function render(nodeId){
   sceneLayers($('scene-art'),'scenes',regKey,{region:regKey});
   AUDIO.setScene(n.music||regKey, reg.depth, S.star,
     n.judge ? n.judge.soul : (nodeId==='n_rite' ? S.flags.rite.soul : (n.motif||null)));
-  // the descent: a veil falls when you go a circle deeper
-  if (lastDepth!==null && reg.depth>lastDepth && reg.depth<10){
+  // transitions: a dark veil falls when you sink a circle; light rises when you climb
+  const tierNow = S.act==='paradiso' ? (reg.sphere??0)
+    : S.act==='purgatorio' ? (reg.terrace??0) : reg.depth;
+  if (lastDepth!==null){
     const gs=$('game-screen');
-    gs.classList.remove('descending'); void gs.offsetWidth; gs.classList.add('descending');
-    AUDIO.sting('descend');
-    setTimeout(()=>gs.classList.remove('descending'),1000);
+    if ((!S.act||S.act==='inferno') && tierNow>lastDepth && tierNow<10){
+      gs.classList.remove('descending'); void gs.offsetWidth; gs.classList.add('descending');
+      AUDIO.sting('descend');
+      setTimeout(()=>gs.classList.remove('descending'),1000);
+    } else if (S.act && S.act!=='inferno' && tierNow>lastDepth){
+      gs.classList.remove('ascending'); void gs.offsetWidth; gs.classList.add('ascending');
+      AUDIO.sting('remember');
+      setTimeout(()=>gs.classList.remove('ascending'),1000);
+    }
   }
-  lastDepth=reg.depth;
+  lastDepth=tierNow;
   curRegion=regKey;
+  $('app').dataset.act = S.act||'inferno';
   if (S.act==='paradiso'){
     const sp = reg.sphere!==undefined ? reg.sphere : 0;
     S.seenS=S.seenS||[];
@@ -567,7 +602,8 @@ function render(nodeId){
     if (gleaming && !c.pre) pre=`<span class="c-pre">it gleams for you</span>`;
     if (full) { b.style.opacity=.45; b.style.cursor='not-allowed';
       pre=`<span class="c-pre">your mouth is full of names</span>`; }
-    b.innerHTML = pre + corruptLabel(fmt(c.t), nodeId+ix);
+    b.innerHTML = pre + corruptLabel(fmt(c.t), nodeId+ix)
+      + `<span class="hotkey">${box.children.length+1}</span>`;
     b.onclick=()=>{ if(full){ b.style.transform='translateX(0)'; return; } choose(c); };
     box.appendChild(b);
   });
@@ -707,6 +743,7 @@ function ending(id){
     this.onerror=function(){this.remove();}; };
   const reg = e.kind==='true' ? 'beatrice' : e.art;
   AUDIO.setScene(reg, REGIONS[reg]?REGIONS[reg].depth:9, e.kind==='death'?0:6);
+  $('ending-screen').dataset.kind = e.kind;
   $('ending-kind').textContent = e.kind==='death'?'a canto ends':(e.kind==='true'?'the comedy is divine':'an exit');
   $('ending-kind').className='k-'+e.kind;
   $('ending-title').textContent=e.title;
@@ -787,6 +824,11 @@ document.addEventListener('keydown',e=>{
     toast(P.fx.sfx?'echoes: lit':'echoes: snuffed'); }
   else if (e.key==='t'){ P.fx.tw=P.fx.tw?0:1; saveP();
     toast(P.fx.tw?'the text unfurls':'the text arrives whole'); }
+  else if (/^[1-9]$/.test(e.key) && !$('game-screen').classList.contains('hidden')){
+    const btns=[...document.querySelectorAll('#choices .choice')];
+    const b=btns[+e.key-1];
+    if (b) b.click();
+  }
 });
 
 /* ---------------- boot ---------------- */
