@@ -404,6 +404,52 @@ lethe(r){ return G('lt',[[0,'#b8d4c8'],[.5,'#88b4a8'],[1,'#4a8478']])+rect(0,0,W
     return `<path d="M${x},346 q-3,-30 6,-40 q7,-7 11,1 q4,10 1,39 z" fill="#3a6450" opacity=".8"/>`;}).join('')
   +Array.from({length:16},()=>circ(r()*W,300+r()*60,2,'#f0e8c8',.8)).join('')
   +fog(280,140,'#a8ccc0',.3,30)+figures(560,332,.9,'#24443c',true);},
+/* ================= ACT III painters — the Spheres ================= */
+moon(r){ return G('pm',[[0,'#e8e4dc'],[.55,'#d8d4d0'],[1,'#c2c4cc']])+rect(0,0,W,H,'url(#pm)')
+  +RG('pmg',[[0,'#fff',.9],[1,'#fff',0]])+circ(450,250,320,'url(#pmg)')
+  +circ(450,250,200,'#f0ece4',.85)
+  +Array.from({length:9},()=>{const x=300+r()*300,y=140+r()*220;
+    return `<ellipse cx="${x}" cy="${y}" rx="14" ry="18" fill="#dcd6ce" opacity=".55"/>`+circ(x-4,y-4,1.5,'#b8b2aa')+circ(x+4,y-4,1.5,'#b8b2aa');}).join('')
+  +Array.from({length:20},()=>circ(r()*W,r()*H,1.2,'#fff',.6)).join('')
+  +figures(360,470,1,'#8a8480');},
+venus(r){ return G('pv',[[0,'#f0e0d8'],[.5,'#e4ccd0'],[1,'#d0b4c4']])+rect(0,0,W,H,'url(#pv)')
+  +RG('pvg',[[0,'#fff4e8',.95],[1,'#fff4e8',0]])+circ(620,180,260,'url(#pvg)')
+  +Array.from({length:16},()=>{const x=r()*W,y=r()*380,s2=3+r()*7;
+    return `<circle cx="${x}" cy="${y}" r="${s2}" fill="#f8ecd8" opacity=".85"><animate attributeName="cy" values="${y};${y-30};${y}" dur="${6+r()*6}s" repeatCount="indefinite"/></circle>`;}).join('')
+  +figures(280,470,1,'#9a8088');},
+sunfire(r){ return G('ps',[[0,'#f8ecc8'],[.5,'#f0dca0'],[1,'#e0c070']])+rect(0,0,W,H,'url(#ps)')
+  +RG('psg',[[0,'#fff',1],[1,'#fff',0]])+circ(450,250,300,'url(#psg)')
+  +Array.from({length:12},(_,i)=>{const a=i*(Math.PI/6);
+    return `<circle cx="${450+180*Math.cos(a)}" cy="${250+130*Math.sin(a)}" r="10" fill="#f8f0d0" stroke="#d8b860"><animateTransform attributeName="transform" type="rotate" values="0 450 250;360 450 250" dur="60s" repeatCount="indefinite"/></circle>`;}).join('')
+  +figures(430,470,1,'#a08850');},
+mars(r){ return G('pma',[[0,'#e8d0c8'],[.5,'#d8b0a8'],[1,'#b88078']])+rect(0,0,W,H,'url(#pma)')
+  +`<path d="M450,60 L450,440 M270,250 L630,250" stroke="#c04838" stroke-width="26" opacity=".55"/>`
+  +Array.from({length:30},()=>{const onV=r()<.5;const x=onV?438+r()*24:280+r()*340;const y=onV?70+r()*360:238+r()*24;
+    return circ(x,y,3,'#f8e0d0',.9);}).join('')
+  +RG('pmag',[[0,'#fff0e0',.7],[1,'#fff0e0',0]])+circ(450,250,240,'url(#pmag)')
+  +figures(240,470,1,'#8a5a50');},
+jupiter(r){ return G('pj',[[0,'#f0f0ec'],[.5,'#e0e4e8'],[1,'#c8d4dc']])+rect(0,0,W,H,'url(#pj)')
+  +`<g opacity=".9"><path d="M450,140 q-90,30 -150,110 q70,-16 110,10 q-20,60 10,120 q26,-50 30,-90 q60,50 130,44 q-50,-56 -66,-100 q70,-30 96,-84 q-80,20 -160,-10 z" fill="#f4f2ea" stroke="#a8b4c0"/></g>`
+  +circ(430,220,4,'#6a7a88')
+  +Array.from({length:26},()=>circ(300+r()*300,150+r()*220,2,'#fff',.85)).join('')
+  +figures(600,470,1,'#7a8894');},
+saturn(r){ return G('psa',[[0,'#e8ecf0'],[.5,'#d4dce8'],[1,'#b8c8dc']])+rect(0,0,W,H,'url(#psa)')
+  +Array.from({length:9},(_,i)=>{const y=440-i*46;
+    return `<line x1="${380-i*8}" y1="${y}" x2="${520+i*8}" y2="${y}" stroke="#f4f0e0" stroke-width="5" opacity=".9"/>`;}).join('')
+  +`<line x1="372" y1="450" x2="440" y2="40" stroke="#c8c0a8" stroke-width="2"/>
+   <line x1="528" y1="450" x2="460" y2="40" stroke="#c8c0a8" stroke-width="2"/>`
+  +Array.from({length:7},()=>{const y=100+r()*300;return circ(450+(r()-.5)*60,y,4,'#f8f4e4',.9);}).join('')
+  +figures(300,470,1,'#8894a4');},
+rose(r){ return G('pr',[[0,'#fdf8ec'],[.6,'#f6ecd4'],[1,'#e8d8b8']])+rect(0,0,W,H,'url(#pr)')
+  +RG('prg',[[0,'#fff',1],[.4,'#fdf4dc',.8],[1,'#fdf4dc',0]])
+  +Array.from({length:6},(_,i)=>{const rad=60+i*54;
+    return `<circle cx="450" cy="240" r="${rad}" fill="none" stroke="#e0c890" stroke-width="${14-i*1.5}" opacity="${.5-i*.05}"/>`;}).join('')
+  +Array.from({length:60},(_,i)=>{const a=r()*Math.PI*2,d=70+r()*280;
+    return circ(450+d*Math.cos(a),240+d*Math.sin(a)*.72,2.4,'#fff',.9);}).join('')
+  +circ(450,240,44,'url(#prg)')
+  +Array.from({length:10},()=>{const x=r()*W,y=r()*H;
+    return `<path d="M${x},${y} q2,-4 4,0 q-2,3 -4,0 z" fill="#e8c060" opacity=".6"><animateTransform attributeName="transform" type="translate" values="0,0;${(r()-.5)*40},${(r()-.5)*40};0,0" dur="${8+r()*6}s" repeatCount="indefinite"/></path>`;}).join('')
+  +figures(430,478,.95,'#a89058',true);},
 };
 
 /* aliases for regions sharing painters */

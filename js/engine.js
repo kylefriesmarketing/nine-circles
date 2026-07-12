@@ -139,6 +139,7 @@ function titleScreen(){
     +`<span class="tw-label">${P.witness.length} of 9 remembered</span>`;
   $('btn-continue').classList.toggle('hidden', !loadRun());
   $('btn-ascent').classList.toggle('hidden', !P.witness.includes('s_virgil'));
+  $('btn-rose').classList.toggle('hidden', !P.endings['pe_paradiso']);
   const res=$('title-residue');
   if (P.runs>0){
     const r=STORY.helpers.domRes(P);
@@ -162,6 +163,9 @@ $('btn-continue').onclick=()=>{ const r=loadRun(); if(!r) return titleScreen();
 $('btn-ascent').onclick=()=>{
   S=newRun(P.playerName||'Pilgrim'); S.flags.ascentDirect=1; lastDepth=null;
   show('game-screen'); render('n_purgatorio'); };
+$('btn-rose').onclick=()=>{
+  S=newRun(P.playerName||'Pilgrim'); lastDepth=null;
+  show('game-screen'); render('r_arrive'); };
 
 /* ---------------- galleries ---------------- */
 function gallery(title, sub, bodyHTML){
@@ -248,6 +252,32 @@ const RAIL_COL=['#4a7a6e','#7a8a6a','#8a5a9a','#5a7288','#8a6f3e',
                 '#4e6a4a','#c4552a','#7a5a42','#9a6a3a','#b8d4de'];
 function paintRail(depth, seen){
   seen=seen||[];
+  if (S && S.act==='paradiso'){
+    // ----- the ascent of lights -----
+    const lum=S.lumen||0;
+    const names=['☽','☿♀','☉','♂','♃','♄','✿'];
+    let s=`<svg viewBox="0 0 100 1000" preserveAspectRatio="xMidYMid meet">
+      <defs><radialGradient id="plight"><stop offset="0" stop-color="#fff8e8" stop-opacity=".9"/>
+        <stop offset="1" stop-color="#fff8e8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f0ead8"/><stop offset="1" stop-color="#cfd8e8"/>
+      </linearGradient></defs>
+      <rect width="100" height="1000" fill="url(#pbg)"/>
+      <line x1="50" y1="80" x2="50" y2="930" stroke="#c9b88a" stroke-width="1"/>`;
+    for (let i=0;i<7;i++){
+      const y=880-i*125, cur=i===depth, vis=seen.includes(i);
+      s+=`<circle cx="50" cy="${y}" r="${cur?15:10}" fill="url(#plight)" opacity="${vis||cur?1:.35}"/>
+        <circle cx="50" cy="${y}" r="${cur?6:4}" fill="${cur?'#c9a35c':vis?'#b8a878':'#c8c2b0'}"/>
+        <text x="72" y="${y+4}" font-size="12" fill="${cur?'#8a6f3e':'#a89c84'}" font-family="Georgia">${names[i]}</text>`;
+      if (cur){
+        s+=`<circle cx="50" cy="${y}" r="${8+lum*1.6}" fill="none" stroke="#c9a35c" stroke-width="1" opacity=".7">
+          <animate attributeName="opacity" values=".7;.3;.7" dur="3s" repeatCount="indefinite"/></circle>`;
+      }
+    }
+    s+=`<circle cx="50" cy="52" r="20" fill="url(#plight)"/><text x="50" y="58" text-anchor="middle" font-size="17" fill="#c9a35c">✿</text>`;
+    $('depth-rail').innerHTML=s+`</svg>`;
+    return;
+  }
   if (S && S.act==='purgatorio'){
     // ----- the Mountain -----
     const graced=!!(P.endings && P.endings['e_beatrice_clear']);
@@ -352,6 +382,22 @@ function paintRail(depth, seen){
 
 /* ---------------- HUD — the Reliquary ---------------- */
 function paintHUD(){
+  if (S.act==='paradiso'){
+    const lum=S.lumen||0, qs=(S.questions||[]).length;
+    const halo=`<div class="relic" title="Your lumen (${lum}/9) — the light you emit. It rises only when you answer truly; the only pain here is being seen pretending.">
+      <svg viewBox="0 0 30 30" width="26" height="26">
+        <circle cx="15" cy="15" r="${4+lum*.9}" fill="#f4e8c0" opacity="${.35+lum*.07}"/>
+        <circle cx="15" cy="15" r="4" fill="#c9a35c"/>
+        ${Array.from({length:Math.min(9,lum)},(_,i)=>{const a=i*(Math.PI*2/9);
+          return `<line x1="${15+7*Math.cos(a)}" y1="${15+7*Math.sin(a)}" x2="${15+(9+lum*.5)*Math.cos(a)}" y2="${15+(9+lum*.5)*Math.sin(a)}" stroke="#c9a35c" stroke-width="1" opacity=".8"/>`;}).join('')}
+      </svg></div>`;
+    const qEl=`<div class="relic" title="${qs===0?'Questions carried — the last collectible. Carry what you still want to know.':qs+' carried: '+(S.questions||[]).map(q=>STORY.questions[q]).join(' · ')}">
+      <svg viewBox="0 0 20 20" width="18" height="18">
+        <text x="10" y="15" text-anchor="middle" font-size="15" font-family="Georgia" fill="${qs>0?'#c9a35c':'#c8c2b0'}">?</text>
+      </svg><span style="font-size:12px;color:${qs>0?'#8a6f3e':'#a89c84'};margin-left:2px">${qs}</span></div>`;
+    $('hud').innerHTML=halo+qEl;
+    return;
+  }
   if (S.act==='purgatorio'){
     const phase=Math.min(6,S.dayPhase||0), night=curRegion==='pnight';
     const sa=Math.PI*(1-phase/6), sx=13+9*Math.cos(sa), sy=17-10*Math.sin(sa);
@@ -478,7 +524,12 @@ function render(nodeId){
   }
   lastDepth=reg.depth;
   curRegion=regKey;
-  if (S.act==='purgatorio'){
+  if (S.act==='paradiso'){
+    const sp = reg.sphere!==undefined ? reg.sphere : 0;
+    S.seenS=S.seenS||[];
+    if (!S.seenS.includes(sp)) S.seenS.push(sp);
+    paintRail(sp, S.seenS);
+  } else if (S.act==='purgatorio'){
     const tier = reg.terrace!==undefined ? reg.terrace : 0;
     S.seenT=S.seenT||[];
     if (!S.seenT.includes(tier)) S.seenT.push(tier);
@@ -579,6 +630,10 @@ function choose(c){
     S.prayers.push(c.pray); AUDIO.sting('remember'); }
   if (c.wipeP && S.ps){ S.ps[c.wipeP]=1;
     if (S.burdens) S.burdens[c.wipeP]=0; AUDIO.sting('absolve'); }
+  // ACT III effects
+  if (c.lumen) S.lumen=clamp((S.lumen||0)+c.lumen,0,9);
+  if (c.carryQ && S.questions && !S.questions.includes(c.carryQ)){
+    S.questions.push(c.carryQ); AUDIO.sting('verse'); }
   if (c.learnVerse){ if(!S.verses.includes(c.learnVerse)) S.verses.push(c.learnVerse);
     if(!P.versesFound.includes(c.learnVerse)){ P.versesFound.push(c.learnVerse); saveP(); }
     AUDIO.sting('verse'); }
@@ -601,7 +656,7 @@ function choose(c){
   // Virgil walks: if his regard is spent before the climb, he goes home
   // (on the mountain he is out of his jurisdiction — no departures there)
   let next = typeof c.go==='function' ? c.go(S,P) : c.go;
-  if (S.act!=='purgatorio' && S.virgil<=0 && next
+  if ((!S.act || S.act==='inferno') && S.virgil<=0 && next
       && !['n_climb','n_exit','n_exit2','n_purgatorio','n_beatrice_verdict','n_abandoned'].includes(next))
     next='n_abandoned';
   if (next) render(next);

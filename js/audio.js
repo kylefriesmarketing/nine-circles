@@ -55,6 +55,14 @@ const REGION_CFG = {
   eden:    { noise:'water',nLvl:.04, drone:[0,7,12,16],pulse:0,bells:2, warm:1, birds:1 },
   pageant: { noise:'wind', nLvl:.02, drone:[0,7,12,16],pulse:8,bells:3, warm:1 },
   lethe:   { noise:'water',nLvl:.06, drone:[0,7,12,16],pulse:0,bells:3, warm:1, birds:1 },
+  /* ----- ACT III: the spheres (all major, choir builds sphere by sphere) -- */
+  moon:    { noise:'wind', nLvl:.015,drone:[0,7,12],   pulse:0, bells:2, warm:1, choir:1 },
+  venus:   { noise:'wind', nLvl:.015,drone:[0,4,7,12], pulse:0, bells:2, warm:1, choir:2 },
+  sunfire: { noise:'wind', nLvl:.01, drone:[0,4,7,12], pulse:0, bells:3, warm:1, choir:3 },
+  mars:    { noise:'wind', nLvl:.01, drone:[0,4,7,12], pulse:7, bells:2, warm:1, choir:4 },
+  jupiter: { noise:'wind', nLvl:.01, drone:[0,4,7,12,16],pulse:0,bells:3, warm:1, choir:5 },
+  saturn:  { noise:'none', nLvl:0,   drone:[0,7,12],   pulse:0, bells:0, warm:1, choir:2 },
+  rose:    { noise:'wind', nLvl:.008,drone:[0,4,7,12,16],pulse:0,bells:3, warm:1, choir:6, medley:1 },
 };
 
 /* her theme — and how much of it grace can still afford */
@@ -223,6 +231,29 @@ function setScene(regionKey,depthLvl,starLvl,motif){
     const s1=osc('sine',midiHz(rootMidi+36),.015,musicBus);
     const s2=osc('sine',midiHz(rootMidi+36)+2.7,.015,musicBus);
     nodes.push(s1.o,s2.o);gains.push(s1.g,s2.g);
+  }
+  if (cfg.choir){
+    // sphere by sphere, voices join — slow-attack detuned triangles in a major stack
+    const iv=[0,4,7,12,16,19];
+    for (let i=0;i<cfg.choir;i++){
+      const v=osc('triangle', midiHz(rootMidi+12+iv[i%iv.length])*(1+((i%2?1:-1)*.0015)),
+        .018, musicBus);
+      nodes.push(v.o); gains.push(v.g);
+    }
+  }
+  if (cfg.medley){
+    // the Rose: every soul's leitmotif returns, resolved into the major choir —
+    // Ugolino's gnawing semitone becomes the suspension that finally lands
+    const ids=Object.keys(MOTIFS);
+    let idx=0;
+    const playNext=()=>{ if(!current) return;
+      const def=MOTIFS[ids[idx%ids.length]]; idx++;
+      const resolved=Object.assign({},def,{w:'triangle',vol:def.vol*.8,
+        notes:def.notes.map(n=>n===null?null:(n===1?4:n<0?n+12:n))});
+      const len=playMotif(resolved, rootMidi+12);
+      motifTimer=setTimeout(playNext, len*1000+2500);
+    };
+    motifTimer=setTimeout(playNext, 3000);
   }
   if (cfg.birds){
     // Eden: brief random birdsong chirps, high and unhurried

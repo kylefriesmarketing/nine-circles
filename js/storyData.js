@@ -47,6 +47,14 @@ const regions = {
   eden:      { name:'The Ancient Forest',       depth:10, terrace:9 },
   pageant:   { name:'The Procession',           depth:10, terrace:9 },
   lethe:     { name:'The Two Rivers',           depth:10, terrace:9 },
+  /* ----- ACT III: the spheres ----- */
+  moon:    { name:'The Sphere of the Moon',     depth:10, sphere:0 },
+  venus:   { name:'The Spheres of Mercury and Venus', depth:10, sphere:1 },
+  sunfire: { name:'The Sphere of the Sun',      depth:10, sphere:2 },
+  mars:    { name:'The Sphere of Mars',         depth:10, sphere:3 },
+  jupiter: { name:'The Sphere of Jupiter',      depth:10, sphere:4 },
+  saturn:  { name:'The Ladder of Saturn',       depth:10, sphere:5 },
+  rose:    { name:'The Rose',                   depth:10, sphere:6 },
 };
 
 /* ---------------- verses (exact Longfellow, verified against text/) ------ */
@@ -74,6 +82,11 @@ const verses = {
     lines:['Thee o’er thyself I therefore crown and mitre!'] },
   v_pure:   { title:'The Mountain’s Last Line', src:'Purgatorio, Canto XXXIII',
     lines:['Pure and disposed to mount unto the stars.'] },
+  /* ----- ACT III verses ----- */
+  v_peace:  { title:'Piccarda’s Sea', src:'Paradiso, Canto III',
+    lines:['And his will is our peace; this is the sea'] },
+  v_salt:   { title:'The Taste of Exile', src:'Paradiso, Canto XVII',
+    lines:['Thou shalt have proof how savoureth of salt','The bread of others, and how hard a road','The going down and up another’s stairs.'] },
 };
 const VQ = id => '<span class="verse-quote">' + verses[id].lines.join('<br>') +
   '</span>';
@@ -214,6 +227,26 @@ const prayers = {
   pr_arnaut: { giver:'Arnaut',  ask:'Be mindful, in due season, of my pain.' },
   pr_hollow: { giver:'The Hollowed Singer', ask:'My sister sets two plates still. Tell her one is enough now.' },
 };
+/* ACT III: the questions you may carry (the last collectible — you rose
+   carrying names, then prayers, and finally only what you still want to know) */
+const questions = {
+  q_peace:'Can peace and wanting share one bed?',
+  q_wind: 'Does love outlast the thing it loved?',
+  q_blade:'Can justice love what it corrects?',
+  q_salt: 'Is the truth worth the taste of exile?',
+  q_eye:  'Does the Eagle ever weep?',
+  q_name: 'What were the names FOR, in the end?',
+};
+/* record-readers for the interviews — the blessed quiz you on your own history */
+const answer = (S,P,truthy) => {
+  if (truthy){ S.lumen=Math.min(9,(S.lumen||0)+1); S.flags.lastTruth=1; }
+  else { S.lies=(S.lies||0)+1; S.lumen=Math.max(0,(S.lumen||0)-1); S.flags.lastTruth=0; }
+};
+const rlDeaths = P => (P.runsLog||[]).filter(r=>r.kind==='death').length;
+const rlVerb = (P,verb) => (P.runsLog||[]).reduce((n,r)=>n+Object.values(r.judged||{}).filter(v=>v===verb).length,0);
+const rlMercy = P => rlVerb(P,'pity')+rlVerb(P,'absolve')+rlVerb(P,'remember');
+const rlHarm  = P => rlVerb(P,'condemn')+rlVerb(P,'punish');
+const darkOwned = P => P.endings['e_trade']?'trade':P.endings['e_scythe']?'scythe':P.endings['e_throne']?'throne':null;
 const burdenTotal = S => { let t=0; for (const k in (S.burdens||{})) t+=S.burdens[k]; return t; };
 const psWiped = S => Object.keys(S.ps||{}).filter(k=>S.ps[k]).length;
 const seedAscent = (S,src) => {
@@ -1651,6 +1684,178 @@ p_crown: { region:'pgate', title:'Crowned and Mitred',
       learnVerse:'v_crown', go:'eden_matilda' },
   ]},
 
+/* ================= ACT III: THE SPHERES =================
+   You are not judged here. You are ASKED. The blessed read your record
+   (runsLog, verdicts, the Wall) and the only pain in Paradise is being
+   seen pretending. answer(S,P,truthy) is the whole mechanic. */
+r_arrive: { region:'moon', title:'Waking Upward',
+  enter:S=>{ S.act='paradiso'; S.lumen=S.lumen||0; S.questions=S.questions||[];
+    S.lies=S.lies||0; },
+  text:`There is no burrow this time, and no shore, and no climb. There is only the moment you assent — and then you are standing inside a pearl.\n\nThe sphere of the Moon: light with a body, luminous nacre in every direction, and IN the light, faces — faint as breath on glass, smiling at you with the particular warmth of hosts who have been expecting you for a very long time and never once grew impatient.\n\nBeatrice is beside you. Up here she is easier to look at and harder to describe, and before you can ask the first of your thousand questions she answers the one underneath them all:\n\n<em>“Nothing here can be lost. Not you, not them, not one grain of any of it. No meter will fall. No wing will withhold. Nothing in this whole ascending architecture can be taken from you now.”</em> She looks at you sideways, and there is mischief in the look, ancient and kind. <em>“That is what will make it difficult, {NAME}. The dark asked you to survive. The light will only ever ask you to be ACCURATE.”</em>`,
+  choices:[
+    { t:'“Accurate about what?”', go:'r_piccarda' },
+    { t:'Look at your hands in the pearl-light — carrying, for once, absolutely nothing.',
+      lumen:1, go:'r_piccarda' },
+    { t:'“So there’s no catch. There’s always a catch. I’ve met the catch personally.”',
+      go:'r_piccarda' },
+  ]},
+r_piccarda: { region:'moon', title:'Piccarda',
+  text:(S,P)=>{ const d=rlDeaths(P);
+    return `One of the faces in the nacre comes forward — a young woman, gentle as candle-warmth, wearing the smallest station in Paradise like a favorite room.\n\n<em>“Piccarda,”</em> she says. <em>“I was taken from my vows, alive — dragged out of the cloister into a marriage, and I did not fight to the last breath of me. So I shine from the slowest sphere. The Moon: heaven for those whose yes wavered.”</em> She says it without one drop of grievance, which rearranges something in your chest.\n\n<em>“Now. You came up the long way — the LONGEST way; we watched, we all watched, it was better than anything — so let me ask what the Moon always asks the wavering:”</em>\n\n<em>“How many times did the dark keep you, ${'{NAME}'}, before you learned to leave it?”</em>\n\n(The pearl-light waits. It knows. That is the point of the question.)`; },
+  choices:[
+    { t:(S,P)=>{const d=rlDeaths(P);return d===0?'“Never. I walked it clean, first descent to last.”':`“Never. I walked it clean.” — say it smooth, say it like a résumé.`;},
+      fx:(S,P)=>answer(S,P, rlDeaths(P)===0), go:'r_piccarda2' },
+    { t:(S,P)=>`“${rlDeaths(P)} times. I counted. Some of them were even worth it.”`,
+      fx:(S,P)=>answer(S,P, rlDeaths(P)>0), go:'r_piccarda2' },
+    { t:'“The number isn’t the thing. The leaving is the thing.”',
+      go:'r_piccarda2', fx:S=>S.flags.dodged=1 },
+  ]},
+r_piccarda2: { region:'moon', title:'The Sea She Means',
+  text:(S,P)=>(S.flags.lastTruth===1?`Piccarda’s light BRIGHTENS — and so, you notice with a start, does yours: a warmth at your own edges, faint as first dawn on the mountain. Accuracy, it turns out, is luminous.\n\n`:S.flags.lastTruth===0?`Piccarda smiles — and the smile is the terrible, gentle thing the whole sphere warned you about: she is not fooled, she is not angry, and she is not going to argue. The dark punished lies. The light just SEES them, and lets you stand there, seen. Your edges dim by one candle you didn’t know you had.\n\n`:`Piccarda tilts her head at the dodge — a fair answer, the Moon is full of fair answers — and lets it stand.\n\n`)
+    +`<em>“Do you know why I’m not sad?”</em> she says. <em>“Lowest sphere, wavering vows, the whole file. I’ll tell you, because you walked past ten thousand souls who would kill for the not-knowing of it:”</em>\n${VQ('v_peace')}<em>“His will is our peace. This is the sea everything moves to. I wanted, and wanted, and wanted — and here, at last, the wanting and the having are the same water. You could stay, you know. The Moon keeps the gentle ones.”</em>`,
+  choices:[
+    { pre:'carry the question', t:'“Can peace and wanting share one bed? I’ll carry that one up.”',
+      carryQ:'q_peace', learnVerse:'v_peace', go:'r_venus' },
+    { t:'Stay. The pearl-light. The gentlest room in the universe. Stay.',
+      end:'pa_peace' },
+    { t:'“The sea can wait for me a little longer.” Look up, and assent.', lumen:1,
+      go:'r_venus' },
+  ]},
+r_venus: { region:'venus', title:'The Lovers’ Light',
+  text:(S,P)=>{ const j=(P.runsLog||[]).map(r=>(r.judged||{}).s_francesca).filter(Boolean).pop();
+    return `Mercury passes in a glitter of the honorably ambitious — an emperor in the swarm calls out a whole history of Rome in the time it takes to fall past — and then you are in Venus, and Venus is laughing.\n\nA light spins up to you, bright as a struck match, and introduces herself as Cunizza — <em>“sister of a tyrant, lover of a poet, scandal of three decades, and PERFECTLY at peace, which scandalizes people more than the scandals did.”</em>\n\n<em>“You met my correspondent,”</em> she says, spinning. <em>“Second circle, down in the weather. Francesca. Same force, pilgrim — the very same wind, hers and mine, I want that CLEARLY on your record: love. It blew her into the storm and me into this light, and the difference was never the wind. So —”</em> the light steadies, and the laugh goes serious at the center — <em>“tell me true, you who stood in both weathers: when you met her, what did you DO?”</em>`; },
+  choices:[
+    { t:(S,P)=>{const j=(P.runsLog||[]).map(r=>(r.judged||{}).s_francesca).filter(Boolean).pop();
+        return j?`“The record says: ${j}. The record is right.”`:'“I passed her by. I never once called her down.”';},
+      fx:(S,P)=>answer(S,P,true), go:'r_venus2' },
+    { t:'“I saved her.” — it isn’t what the wind remembers, but it sounds magnificent.',
+      fx:(S,P)=>answer(S,P,false), go:'r_venus2' },
+    { t:'“I joined the storm once. Or wanted to. The wind and I are acquainted.”',
+      fx:(S,P)=>answer(S,P, !!P.endings['e_whirlwind'] || !!P.endings['e_voyage']), go:'r_venus2' },
+  ]},
+r_venus2: { region:'venus', title:'The Same Wind',
+  text:S=>(S.flags.lastTruth===1?`Cunizza flares like applause. <em>“ACCURATE! Oh, the light loves that — feel it?”</em> You feel it: your edges warming another candle’s worth.\n\n`:`Cunizza dims, one courteous degree — not offended; INFORMED. <em>“Darling,”</em> she says, kindly, <em>“I invented that maneuver. It doesn’t work on Venus.”</em>\n\n`)
+    +`<em>“Here is what the storm never gets to learn,”</em> she says, <em>“and what this sphere is FOR: love outlives its object. Every one of mine is dust or glory now, and the loving itself — the capacity, the reaching — came up here with me, intact, pointed finally at something that reaches BACK. Francesca thinks the storm is the love. The storm is just the love with nowhere to land.”</em>\n\nShe spins once more, showering light.\n\n<em>“Go up. The doctors are dancing, and they argue better than I flirt, which is saying an enormous amount.”</em>`,
+  choices:[
+    { pre:'carry the question', t:'“Does love outlast the thing it loved? I’ll carry it.”',
+      carryQ:'q_wind', go:'r_sun' },
+    { t:'“You’d have liked Arnaut. Weeping and singing, both at once.”', lumen:1, go:'r_sun' },
+  ]},
+r_sun: { region:'sunfire', title:'The Ring of the Wise',
+  text:(S,P)=>{ const m=rlMercy(P), h=rlHarm(P);
+    return `The Sun is a dance. Twelve lights — twenty-four — wheeling in rings around you like the mechanism of a clock built to tell something better than time, and each light is a doctor of the church, a philosopher, a burned heretic, a saint, arranged with deliberate scandal: opponents side by side, wheeling in step.\n\nTwo lights detach. <em>“Thomas,”</em> says the first, vast and orderly. <em>“Of Aquino. And this—”</em> the second light dips, ironic — <em>“is Siger, whose propositions I spent a career condemning. We dance in the same ring now. Eternity has a sense of humor with excellent timing.”</em>\n\n<em>“Your record,”</em> Thomas continues, and the ring slows attentively. <em>“The dark logged your verdicts, pilgrim: ${m} act${m===1?'':'s'} of mercy. ${h} of the blade or the gavel. We do not ask you to defend the count.”</em>\n\n<em>“We ask,”</em> says Siger, gleaming, <em>“something harder. Argue the OTHER side. Once. Well. Whichever side isn’t yours.”</em>`; },
+  choices:[
+    { t:(S,P)=>rlMercy(P)>=rlHarm(P)
+        ?'“For the blade, then: some things kneeling before you are not broken — they are PRACTICING. Mercy fed to a practicing thing is tuition for its next victim.”'
+        :'“For mercy, then: the struck soul learns the blow, never the lesson. Only the pardoned lie awake wondering why — and wondering is the door.”',
+      fx:(S,P)=>answer(S,P,true), lumen:1, go:'r_sun2' },
+    { t:'“I won’t argue against myself. My side had reasons.”',
+      fx:(S,P)=>answer(S,P,false), go:'r_sun2' },
+    { t:'“Both sides are wrong. The verdict was always for MY sake, not theirs.”',
+      lumen:1, go:'r_sun2', fx:S=>S.flags.thirdWay=1 },
+  ]},
+r_sun2: { region:'sunfire', title:'What the Dance Is',
+  text:S=>(S.flags.thirdWay?`The two lights stop dead — and then the entire RING stops, twenty-four doctors of the universe pausing mid-wheel to look at you, and Thomas says, slowly, <em>“…Write that down,”</em> to no one, to everyone, to the dance itself.\n\n`:S.flags.lastTruth===1?`The ring chimes — there is no other word for what twenty-four delighted intellects sound like — and Siger laughs the laugh of a man hearing his own execution argued better than the prosecution ever managed.\n\n`:`<em>“Reasons,”</em> Thomas repeats, without heat. <em>“Yes. Every verdict ever handed down had those.”</em> The ring resumes its wheel, and you have the distinct sensation of a very large court declining, with perfect courtesy, to grade your homework.\n\n`)
+    +`<em>“You see what the dance is, now,”</em> Siger says, falling back into step beside the man who condemned him. <em>“Down there, being right was a WEAPON. Up here it is a partner. We spent our lives certain, pilgrim — and heaven’s little joke is to seat you next to your certainty’s favorite target and teach you the steps.”</em>`,
+  choices:[
+    { pre:'carry the question', t:'“Can justice love what it corrects? Carrying it.”',
+      carryQ:'q_blade', go:'r_mars' },
+    { t:'Watch one full wheel of the dance before rising.', lumen:1, go:'r_mars' },
+  ]},
+r_mars: { region:'mars', title:'The Ancestor',
+  text:`Mars is a cross of light the width of a sky, ruby-lit, made of souls who died for something — and out of it, trailing glory like a comet condescending to walk, comes a light that does not introduce itself as a stranger.\n\n<em>“O sanguis meus,”</em> it says — O my blood — and the words land in a place you did not know had a door.\n\n<em>“Cacciaguida. Your father’s fathers’ father, far enough back that the counting turns to legend. I died crusading; I earned this ruby the loud way. And I have watched you, ${'{NAME}'} — the whole family has; we get the full broadcast up here — walk DOWN through everything, and off your sins on the mountain, and up through the wheeling courts. Do you know what you are, child?”</em>\n\nThe cross of light leans in, all of it, a constellation paying attention.\n\n<em>“You are the one who came back with the STORY. And stories have a price the teller pays.”</em>`,
+  choices:[
+    { t:'“Tell me the price.”', go:'r_mars2' },
+    { t:'“The whole family watches? — Grandfather, I kicked a man’s head in the ice.”',
+      lumen:1, go:'r_mars2', fx:S=>S.flags.confessed=1 },
+  ]},
+r_mars2: { region:'mars', title:'The Commission',
+  text:S=>(S.flags.confessed?`The cross of light does something extraordinary: it LAUGHS — a ruby ripple down both beams. <em>“We KNOW,”</em> Cacciaguida says. <em>“We watched. Your great-aunt has opinions. Confession in a place with total broadcast is redundant, child — but it was accurately done, and accuracy shines here. Now.”</em>\n\n`:``)
+    +`<em>“The price,”</em> Cacciaguida says, and the warmth in him banks down to something graver and more loving still.\n${VQ('v_salt')}<em>“Exile. Every true teller’s wage. You will go back down to the world — that is not a curse, it is the COMMISSION — and you will tell all of it: the storm, the ice, the mountain, the wheels of this place. Some will hate the taste. Tell it anyway. The bread up here—”</em> the ruby light flares, gentle — <em>“the bread up here is worth the salt down there. That is the whole economy of witness, and you have been in training for it since a wolf turned you around in the dark.”</em>`,
+  choices:[
+    { pre:'carry the question', t:'“Is the truth worth the taste of exile? I’ll carry it — and I suspect I know your answer.”',
+      carryQ:'q_salt', learnVerse:'v_salt', go:'r_jupiter' },
+    { t:'Accept the commission NOW — turn from the spheres and go down to write it all.',
+      end:'pa_exile' },
+    { t:'“First I finish the climb. A witness should see the ending.”', lumen:1,
+      go:'r_jupiter' },
+  ]},
+r_jupiter: { region:'jupiter', title:'The Eagle',
+  text:(S,P)=>{ const d=darkOwned(P);
+    return `Jupiter is white-silver, and it is WRITING: thousands of lights wheeling into letters, spelling a sentence about justice across a sky — and then the last M of it blossoms, unfolds, becomes wing and neck and terrible patient eye:\n\nAN EAGLE. Made of every just soul at once, and when it speaks, it says I and means ten thousand.\n\n<em>“PILGRIM,”</em> it says, one voice out of the multitude. <em>“We are the eye that reads ledgers whole. We have read yours.”</em>\n\n`+(d==='trade'
+      ?`<em>“You sat down in the ice, once, and traded your seat for the passage of names. The ledger calls it a death. WE call it the only contract ever signed at that address that Heaven would have co-signed. Answer us: when you offered it — did you believe you were escaping, or paying?”</em>`
+      :d==='scythe'
+      ?`<em>“You took the blade from Death and finished the rounds, once, all the way to the vacancy. We do not ask you to repent an OFFICE, pilgrim — someone holds it even now. We ask: when the dying looked up at you, certain they were early — what did you feel?”</em>`
+      :d==='throne'
+      ?`<em>“You sat the throne beside the Emperor once, with a dead star and a full ledger of pride. And then, some other life, you climbed all the way HERE. We have waited a long time to ask the only question that matters about that chair: what did it weigh?”</em>`
+      :`<em>“Your ledger is clean of the three great darknesses — no trade, no scythe, no throne. Clean hands, pilgrim. So answer the question clean hands always fail: why do you believe the untested are just?”</em>`);},
+  choices:[
+    { t:(S,P)=>{const d=darkOwned(P);return d==='trade'?'“Paying. I knew the price when I named it. That’s what made it a contract and not a surrender.”'
+        :d==='scythe'?'“Punctual. Professional. And underneath it, every single round: early. They were all early. So was I.”'
+        :d==='throne'?'“Nothing. It weighed nothing. That was the horror — I had already put everything down that weighs.”'
+        :'“I don’t. I believe the untested are LUCKY, and I’m asking the luck to hold.”';},
+      fx:(S,P)=>answer(S,P,true), go:'r_saturn' },
+    { t:'“I’d rather not discuss the file.”', fx:(S,P)=>answer(S,P,false), go:'r_saturn' },
+    { pre:'carry the question', t:'“My turn, first: does the Eagle ever weep?” — carry it, whatever it answers.',
+      carryQ:'q_eye', go:'r_saturn' },
+  ]},
+r_saturn: { region:'saturn', title:'The Ladder',
+  text:S=>(S.flags.lastTruth===0?`(The Eagle watched your deflection with ten thousand eyes and said nothing, which from a court of that size is a verdict all its own.)\n\n`:``)
+    +`Saturn is crystal and silence. A ladder of light stands through it — up past seeing — and the contemplatives drift along its rungs like thoughts a very calm mind is having. No singing here. The first unsinging sphere. When you ask why, a passing light answers: <em>“The music would end you, this high. Silence is the mercy.”</em>\n\nAnd Beatrice — you turn to her, the old habit of two realms — is not smiling. Has not smiled, you realize, in three spheres.\n\n<em>“Do you think I have run out?”</em> she says, reading you as ever. <em>“The opposite. This high, my smile would burn you to ash where you stand — that is not poetry, {NAME}, it is PHYSICS. I am withholding it the way the fire on the mountain withheld nothing. When you can bear it, you will have it. One sphere more.”</em>\n\nAbove, at the ladder’s top, three lights are waiting: the examiners.`,
+  choices:[
+    { t:'Climb the ladder to the three.', go:'r_exam' },
+    { t:'Stand one moment in the first true silence since Judecca — and feel the difference.',
+      lumen:1, go:'r_exam' },
+  ]},
+r_exam: { region:'saturn', title:'The Examination',
+  text:(S,P)=>`Three lights, three questions, no preamble — Peter, James, and John, the old triple board, and they examine PILGRIMS now the way they once examined the world.\n\n<em>“FAITH,”</em> says the first light. <em>“Not doctrine — evidence. You carried verses through the dark like coins. How many did the road give you?”</em>\n\n(You know this number the way you know your own hands: ${(P.versesFound||[]).length}, gathered from carved bark and burning gates and a whirlwind’s grief.)\n\n<em>“HOPE,”</em> says the second, before you can answer the first — the board examines in chords, apparently. <em>“You stood at the summit of the mountain once, pure and disposed. Was the hoping worth the climbing?”</em>`,
+  choices:[
+    { t:(S,P)=>`“${(P.versesFound||[]).length} verses. And yes — the hope outweighed the mountain. Ask the mountain; it shouted.”`,
+      fx:(S,P)=>answer(S,P,true), lumen:1, go:'r_love' },
+    { t:'“All of them. Every verse there was.” — round up; who’s counting, this high?',
+      fx:(S,P)=>answer(S,P,(P.versesFound||[]).length>=9), go:'r_love' },
+  ]},
+r_love: { region:'saturn', title:'The Third Question',
+  text:`The third light comes closest — John, the one who leaned on love’s shoulder at supper and has been its examiner ever since — and his question is the smallest and the worst:\n\n<em>“LOVE. You inscribed nine names on a wall between worlds. Prove they were love and not COLLECTION, pilgrim. Say one. Now. Unprompted. Any one — but say it like it’s a person and not an achievement.”</em>\n\nThe silence of Saturn makes a courtroom around you.`,
+  choices:[
+    { t:(S,P)=>{const w=(P.witness||[]).filter(x=>souls[x]);const pick=w[2]||w[0];return pick?`“${souls[pick].name}.” — and the story arrives with it, unbidden: where they stood, what they asked, what it cost.`:'Say the first name the dark ever gave you.';},
+      fx:(S,P)=>answer(S,P,true), lumen:1, go:'r_prime' },
+    { t:'“…I’d have to check the Wall.”', fx:(S,P)=>answer(S,P,false), go:'r_prime' },
+    { pre:'carry the question', t:'Answer with a name — and then ask his back: “What were the names FOR, in the end?”',
+      carryQ:'q_name', fx:(S,P)=>answer(S,P,true), go:'r_prime' },
+  ]},
+r_prime: { region:'rose', title:'The Smile, Spent',
+  text:`Past the ladder, past the ninth sphere where the universe turns over in its sleep, the light stops pretending to be sky. You are in the Empyrean: light that is a PLACE.\n\nAn old man is suddenly beside you where Beatrice was — white-robed, warm as banked coals, Bernard, the last guide, and the handoff lands exactly as it landed at the wall of fire: grief and rightness in one motion. <em>“She has gone up,”</em> he says gently, <em>“to where she has always sat. Look.”</em>\n\nYou look. Tier upon tier upon tier of the blessed, rising like the inside of a white rose the size of creation — and there, high in the petals, in the seat that was hers before you ever got lost in a wood, Beatrice.\n\nShe is looking at you. Across the whole amphitheater of Heaven, through the traffic of angels like golden bees — at YOU.\n\nAnd she spends it: the withheld smile, three spheres saved, thirteen centuries kept — all of it, at distance, all for you.\n\nYou do not burn to ash. You understand, at last, why she waited: you can bear it now. That was the whole curriculum, every circle and terrace and sphere of it — becoming someone who could BEAR being loved like that.`,
+  choices:[
+    { t:'Bow to her, across everything.', lumen:1, go:'r_rose' },
+    { t:'Mouth the only words that fit: thank you for the poet.', lumen:1, go:'r_rose',
+      fx:S=>S.flags.thankedAgain=1 },
+  ]},
+r_rose: { region:'rose', title:'The Rose',
+  text:(S,P)=>{ const w=(P.witness||[]).filter(x=>souls[x]&&x!=='s_virgil');
+    return `Bernard walks you along the tiers — and the Rose, you begin to see, is the Witness Wall at the scale of everything: every soul ever carried, inscribed in living petal.\n\nAnd then you see YOURS.\n\n${w.slice(0,8).map(id=>{const nm=souls[id].name;
+      return id==='s_francesca'?`Francesca — high in a warm tier, and nothing is blowing her anywhere; Paolo's shoulder under her hand, at rest.`
+      :id==='s_ciacco'?`Ciacco — at what can only be called a table, dry as harvest, laughing at something with three saints.`
+      :id==='s_forgotten'?`And the Forgotten — with a FACE. Restored, particular, unmistakable, the face the vault ate — and he is looking at you as if you were the one who found it.`
+      :id==='s_sullen'?`The Sullen One — mid-SONG, unmuffled, her sister beside her keeping harmony.`
+      :id==='s_cavalcante'?`Cavalcante — seated, still, finally certain, a young man's hand resting on his shoulder.`
+      :id==='s_pier'?`Pier delle Vigne — upright, un-barked, keys at his belt, his name written whole above his tier with no pause in it anywhere.`
+      :id==='s_ulysses'?`Ulysses — yes, even the sailor, in some annex of the Rose reserved for gloriously arguable cases — studying the tiers like charts, planning nothing, home.`
+      :`Ugolino — and the four boys around him, and bread on every ledge of their tier, untouched, decorative, a joke Heaven makes gently: hunger has no office here.`;}).join('\n\n')}\n\nAnd one tier apart, laurel-crowned, holding a scroll he no longer needs, watching you arrive the way he watched you climb out of the burrow at the bottom of the world: the poet of Rome. Limbo, it seems, has an appeals process after all — and you were the appeal.\n\n<em>“Now,”</em> says Bernard, quietly. <em>“The center. Look, if you are going to look.”</em>`; },
+  choices:[
+    { t:'Look into the Light.', go:'r_light' },
+    { t:'One more minute among the petals first. You know almost everyone.', lumen:1,
+      go:'r_light' },
+  ]},
+r_light: { region:'rose', title:'The Center',
+  text:(S,P)=>`At the heart of the Rose is the Light the whole architecture faces — the thing the funnel fell away from and the mountain leaned toward and every sphere circled like a held breath.\n\nBernard folds his hands. Beatrice, far up in her petal, leans forward.\n\nYou are carrying ${(S.questions||[]).length} question${(S.questions||[]).length===1?'':'s'} — ${(S.questions||[]).length?(S.questions||[]).map(q=>`<em>${questions[q]}</em>`).join(' · '):'none at all'} — and the Light, you understand suddenly, is not going to ANSWER them. It is going to be the place the questions live, the way the sea is where rivers live.\n\nLook, or take your seat. Both are allowed. Nothing here can be lost. That was always the rule, and it is about to be the whole of the law.`,
+  choices:[
+    { t:'Look. All the way. Wings or no wings.',
+      end:(S,P)=> (S.lies||0)===0 && (S.questions||[]).length>=5 ? 'pa_rose' : 'pa_unseen' },
+    { t:'Take your seat in the petals without looking. There is no shame in a seat.',
+      end:'pa_unseen' },
+  ]},
+
 /* ---------------- RITE INTERLUDE (absolve / punish, engine-injected) --- */
 n_rite: { region:(S)=>S.flags.rite.region,
   title:S=>S.flags.rite.verb==='absolve'?'Absolution':'The Office of the Blade',
@@ -1728,6 +1933,14 @@ e_stars: { title:'To See the Stars Again', kind:'exit', art:'stars',
   text:`You step out of the burrow at the bottom of the world, and there they are — the stars, in their ancient stations, entirely unaware of being the finish line of anything.\n\nYou stand a long time with your head back. Nine circles of the worst the universe files away, and the antidote turns out to be: night sky, free of charge, above every unlocked door on Earth.\n\nYou will keep your promises. At dinners. In quiet rooms. Once a year at least, out loud — the names.\n\nThence you came forth, says the poem, to rebehold the stars. It does not say the stars beheld you back. But tonight, walking home down the mountain with your pockets full of names, you would swear to it.` },
 e_falsestars: { title:'Painted Stars', kind:'exit', art:'stars',
   text:`You step out of the burrow, and there they are — the stars.\n\nThey are very good. Whoever did them studied the originals closely: the constellations are all present, correctly spaced, glittering with commendable diligence on the underside of a ceiling of stone.\n\nYou noticed the brushwork on the third night. You have decided not to notice it again. The names in your pockets have gone quiet — smoke settles, in here, where no wind comes — and the exit you remember exiting is behind you somewhere, probably, painted on.\n\nThe star you carried could have told you. But you spent it, candle by candle, all the way down — and the dark, which keeps exact books, sold you back exactly the light you paid for: a picture of it.` },
+pa_peace: { title:'The Gentlest Room', kind:'true', art:'moon',
+  text:`You stay, and Piccarda does not congratulate you, because arrival is not a contest here — she simply moves over, the way she must once have moved over on a cloister bench, and the pearl-light takes you in like a name added to a song already being sung.\n\nThe Moon is the slowest sphere, the smallest station, heaven's ground floor — and here is what nobody below ever believes: it is ENOUGH. Not settled-for. Enough the way water is enough, the way the reed on the mountain's shore was enough. The wanting and the having, one water at last.\n\nHigher spheres wheel above you forever, and sometimes you watch their light the way you once watched a star from the bottom of a funnel — but the old ache of the watching is gone, dissolved in the sea she told you about.\n\nHis will is our peace. You tested every other sentence in two worlds. This is the one that held.` },
+pa_unseen: { title:'Seen Pretending', kind:'true', art:'rose',
+  text:`You take your seat in the petals, and Heaven — this is the mercy and the sentence in one — lets you.\n\nNo one minds. That must be said clearly: NO ONE MINDS. The blessed around your tier smile at you with perfect warmth, and the light is real, and the seat is yours forever, honestly earned by the climbing if not by the answering.\n\nBut you carried lies up here, or carried too few questions, and the difference between you and the petals around you is a difference only you can feel: they are TRANSPARENT to the Light, and you are not quite. It passes around you the way a river passes a stone — touching everything, entering nothing.\n\nEternity is long, and the Rose is patient, and transparency, Bernard murmurs from somewhere, can still be learned at any tier — the curriculum never closes. But it will have to be learned. The Light does not enter where accuracy has not opened a door.\n\nThe only pain in Paradise, kept: being seen pretending. You are seen. You always were. The pretending was only ever visible to everyone.` },
+pa_exile: { title:'The Salt and the Stairs', kind:'true', art:'mars',
+  text:`You turn from the spheres with the commission burning in your chest, and Cacciaguida's light flares behind you like a ruby striking noon — pride, undisguised, ancestral: THAT is my blood, going DOWN to tell it.\n\nThe descent from Heaven is not a fall. It is a sending.\n\nYou wake at a desk. There is paper. There was always going to be paper.\n\nAnd you write it — the wood, the wolf, the poet who was kept in Limbo and walked you out anyway; the storm and the ice and the trade at the bottom; the mountain that shook when men were finished; the spheres that asked instead of judged. You eat the salt bread of others while you write it, and climb the hard stairs of houses not your own, and the taste is exactly as promised and exactly worth it.\n\nSomewhere above, unfinished, the Rose waits — you never looked into the Light, and some nights the not-knowing is its own cold terrace. But the poem on the desk grows a canto at a time, and every canto is a rope let down into the dark for whoever wakes there next, midway upon the journey of their life.\n\nThe teller pays. The telling keeps. You knew the economy when you signed.` },
+pa_rose: { title:'The Love That Moves', kind:'true', art:'rose',
+  text:`You look.\n\nYour own wings are not sufficient — the poem warned you, the poem was right about everything — and at the exact instant they fail, the failing stops mattering: the Light does not require your strength. It requires your ACCURACY, and you spent three realms becoming accurate, and so it lets you in.\n\nWhat you see cannot come back down whole. Fragments return: three circles, one motion, like colors of a single turning; your own likeness, impossibly, woven into the second; every question you carried — peace and wanting, love and its objects, the blade, the salt, the Eagle's eye, the names — not answered but SEATED, each one given a tier of its own, alive, at rest, still asking. The sea where rivers live.\n\nAnd the last thing, before the seeing folds back into the sayable: the turning. Everything — the pearl Moon and the dancing doctors, the ruby cross and the writing eagle, the Rose entire, the funnel far below still patiently filing, the mountain mid-shout, the dark wood where a wolf is turning someone new around — everything turning together, one wheel, one will, one word:\n\nThe Love which moves the sun and the other stars.\n\nHere ends the comedy. It was called that, you finally understand, because it ends well — and it ends well because you went. Midway upon the journey of your life, you found yourself within a forest dark.\n\nAnd look. Just look where the straightforward pathway was.` },
 pe_belacqua: { title:'In the Shadow of the Rock', kind:'death', art:'purgatorio',
   text:`The shade is perfect. That is the truth nobody can argue with, and you stop arguing with it.\n\nBelacqua does not gloat. Gloating is effort. He shifts over exactly enough boulder-shadow for two, and the sea below performs its slow blue forever, and the terraces above go on singing to the people who are into that sort of thing.\n\nHere is what the mountain does about it: nothing. No wasps, no rain, no wheel. The mountain is not Hell; it does not punish rest. It simply keeps the gate exactly where the gate is, and lets the shade be shade, and waits — thirty years for every year, renewable — with the whole patience of geology.\n\nSome afternoons a new pilgrim comes up the slope radiating climb, and you and Belacqua watch them pass with the connoisseurship of retired referees. He was right, you know. It IS the tailoring that breaks you.\n\nThe mountain is not going anywhere. You checked.` },
 pe_siren: { title:'The Sweet Wrong Song', kind:'death', art:'pnight',
@@ -1744,6 +1957,6 @@ e_beatrice_clear: { title:'The Love That Moves the Stars', kind:'true', art:'bea
   text:`She weighs you a long time. The dawn holds its breath. Nine circles, three names, one guide witnessed home — the whole descent stands in the scale.\n\n"You wept," she says at last, "and walked on. Both. In the correct order, at every station of the dark. Do you know how rare that is, pilgrim? The pit is FULL of the ones who could only do one."\n\nShe turns, and the mountain makes way, terrace upon terrace of singing rising into light that improves as it climbs — and at the top of everything, briefly, you see it whole: the turning, the engine, the thing the whole tour was arranged to show you—\n\nThe Love which moves the sun and the other stars.\n\nYou will spend the rest of your life failing to describe it at dinners, keeping your promises, saying the names. Beginning with a poet’s. It is, as the lady says, not nothing. It is not even close to nothing.\n\nIt is the whole of the arithmetic, and it balances.` },
 };
 
-return { regions, verses, souls, nodes, endings, VQ, prayers,
+return { regions, verses, souls, nodes, endings, VQ, prayers, questions,
   helpers:{ domSin, domRes, SIN_NODE, SIN_WORD, burdenTotal, psWiped } };
 })();
