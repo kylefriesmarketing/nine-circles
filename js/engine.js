@@ -657,6 +657,19 @@ function ending(id){
   $('ending-title').textContent=e.title;
   $('ending-text').textContent=e.text;
   $('ending-inscribe').textContent=inscribeMsg;
+  // per-soul epilogues: on living exits, your verdicts echo upward
+  const EPI_ORDER=['s_francesca','s_ciacco','s_forgotten','s_sullen',
+    's_cavalcante','s_pier','s_ulysses','s_ugolino'];
+  let epi='';
+  if (escaped){
+    EPI_ORDER.forEach(sid=>{
+      const v=S.judged[sid], soul=SOULS[sid];
+      if (v && soul && soul.epi && soul.epi[v])
+        epi+=`<div class="epi-line"><b>${soul.name}</b> — ${soul.epi[v]}</div>`;
+    });
+  }
+  $('ending-epilogue').innerHTML = epi
+    ? `<div class="epi-head">what your verdicts did</div>`+epi : '';
   show('ending-screen');
 }
 $('btn-again').onclick=titleScreen;

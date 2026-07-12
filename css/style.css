@@ -259,6 +259,13 @@ kbd{border:1px solid var(--gold-dim);border-radius:3px;padding:0 4px;font-family
 #ending-text{font-size:16px;line-height:1.7;color:var(--bone);font-style:italic;
   white-space:pre-wrap}
 #ending-inscribe{margin-top:16px;color:var(--gold);font-size:14px;min-height:20px}
+#ending-epilogue{margin-top:14px;text-align:left;max-height:26vh;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#5a4a32 transparent}
+.epi-head{font-size:10px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--gold-dim);text-align:center;margin-bottom:8px}
+.epi-line{font-size:13px;line-height:1.6;color:var(--bone-dim);font-style:italic;
+  margin:7px 0;padding-left:12px;border-left:1px solid #c9a35c33}
+.epi-line b{color:var(--gold);font-weight:400;font-style:normal}
 #btn-again{margin-top:22px}
 
 /* ---------- debug ---------- */
